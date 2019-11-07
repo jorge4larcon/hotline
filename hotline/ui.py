@@ -18,9 +18,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
-import dbdriver
 import os
-import model
 
 
 class Ui_HotlineMainWindow(object):
@@ -661,9 +659,8 @@ class Ui_HotlineMainWindow(object):
 
 
 class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
-    def __init__(self, database: dbdriver.HotlineDB, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        self.database = database
         self.setupUi(self)
 
         # When user changes between tabs, keep the information ordered
