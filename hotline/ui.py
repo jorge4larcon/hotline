@@ -676,9 +676,83 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
 
+        self.set_initial_values()
+
         # The rule to save values in the database is when signal editingFinished
         # FTP tab
         # When start is pressed the values are saved
+
+    def set_initial_values(self):
+        conn = dbfunctions.get_connection()
+        ipv4, ipv6, ftp_port, ftp_max_conn, ftp_max_conn_per_ip, ftp_folder, ftp_banner, int_address, int_port, int_pass, inbox_port, mac_address, username = \
+            dbfunctions.get_configuration(conn, 'ipv4_address', 'ipv6_address', 'ftp_port', 'ftp_max_connections',
+                                          'ftp_max_connections_per_ip', 'ftp_folder', 'ftp_banner',
+                                          'interlocutor_address',
+                                          'interlocutor_port', 'interlocutor_password', 'inbox_port', 'mac_address', 'username')
+
+        # FTP tab
+        if username:
+            self.myContactInfoNameLineEdit.setText(username)
+        else:
+            self.myContactInfoNameLineEdit.setText('Muhammad')
+
+        if ipv4:
+            self.ftpIpAddressLineEdit.setText(ipv4)
+            self.myContactInfoIpAddressLineEdit.setText(ipv4)
+        elif ipv6:
+            self.ftpIpAddressLineEdit.setText(ipv6)
+            self.myContactInfoIpAddressLineEdit.setText(ipv6)
+        else:
+            self.ftpIpAddressLineEdit.setText('Unable to obtain your IP')
+            self.myContactInfoIpAddressLineEdit.setText('Unable to obtain your IP')
+
+        if inbox_port:
+            self.myContactInfoChatPortSpinBox.setValue(inbox_port)
+        else:
+            self.myContactInfoChatPortSpinBox.setValue(42000)
+
+        if int_address:
+            self.interIpAddressLineEdit.setText(int_address)
+
+        if int_port:
+            self.interPortSpinBox.setValue(int_port)
+        else:
+            self.interPortSpinBox.setValue(42000)
+
+        if int_pass:
+            self.interPasswordLineEdit.setText(int_pass)
+        else:
+            self.interPasswordLineEdit.setText('secret')
+
+        if mac_address:
+            self.myContactInfoMacAddressLineEdit.setText(mac_address)
+        else:
+            self.myContactInfoMacAddressLineEdit.setText('Unable to get your MAC')
+
+        if ftp_port:
+            self.ftpPortSpinBox.setValue(ftp_port)
+        else:
+            self.ftpPortSpinBox.setValue(21)
+
+        if ftp_max_conn:
+            self.ftpMaxConnectionsSpinBox.setValue(ftp_max_conn)
+        else:
+            self.ftpMaxConnectionsSpinBox.setValue(5)
+
+        if ftp_max_conn_per_ip:
+            self.ftpMaxConnectionsPerIPSpinBox.setValue(ftp_max_conn_per_ip)
+        else:
+            self.ftpMaxConnectionsPerIPSpinBox.setValue(1)
+
+        if ftp_folder:
+            self.ftpFolderLineEdit.setText(ftp_folder)
+        else:
+            self.ftpFolderLineEdit.setText('')
+
+        if ftp_banner:
+            self.ftpBannerPlainTextEdit.setPlainText(ftp_banner)
+        else:
+            self.ftpBannerPlainTextEdit.setPlainText('')
 
     def ftpStartPushButtonAction(self):
         address = self.ftpIpAddressLineEdit.text()
@@ -704,7 +778,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             logging.info("Updating 'Contacts' tab")
         elif index == 2:
             logging.info("Updating 'FTP' tab")
-            self.update_ftp_tab()
         elif index == 3:
             logging.info("Updating 'Interlocutor' tab")
         elif index == 4:
@@ -712,46 +785,46 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         elif index == 5:
             logging.info("Updating 'Notifications' tab")
 
-    def update_ftp_tab(self):
-        logging.info("Updating 'FTP' tab")
-
-        conn = dbfunctions.get_connection()
-        ipv4, ipv6, port, max_conn, max_conn_per_ip, folder, banner = dbfunctions.get_configuration(conn,
-                                                                                                    'ipv4_address',
-                                                                                                    'ipv6_address',
-                                                                                                    'ftp_port',
-                                                                                                    'ftp_max_connections',
-                                                                                                    'ftp_max_connections_per_ip',
-                                                                                                    'ftp_folder',
-                                                                                                    'ftp_banner')
-        if ipv4:
-            self.ftpIpAddressLineEdit.setText(ipv4)
-        elif ipv6:
-            self.ftpIpAddressLineEdit.setText(ipv6)
-        else:
-            self.ftpIpAddressLineEdit.setText('Unable to obtain your IP')
-
-        if port:
-            self.ftpPortSpinBox.setValue(port)
-        else:
-            self.ftpPortSpinBox.setValue(21)
-
-        if max_conn:
-            self.ftpMaxConnectionsSpinBox.setValue(max_conn)
-        else:
-            self.ftpMaxConnectionsSpinBox.setValue(5)
-
-        if max_conn_per_ip:
-            self.ftpMaxConnectionsPerIPSpinBox.setValue(max_conn_per_ip)
-        else:
-            self.ftpMaxConnectionsPerIPSpinBox.setValue(1)
-
-        if folder:
-            self.ftpFolderLineEdit.setText(folder)
-        else:
-            self.ftpFolderLineEdit.setText('')
-
-        if banner:
-            self.ftpBannerPlainTextEdit.setPlainText(banner)
-        else:
-            self.ftpBannerPlainTextEdit.setPlainText('')
+    # def update_ftp_tab(self):
+    #     logging.info("Updating 'FTP' tab")
+    #
+    #     conn = dbfunctions.get_connection()
+    #     ipv4, ipv6, port, max_conn, max_conn_per_ip, folder, banner = dbfunctions.get_configuration(conn,
+    #                                                                                                 'ipv4_address',
+    #                                                                                                 'ipv6_address',
+    #                                                                                                 'ftp_port',
+    #                                                                                                 'ftp_max_connections',
+    #                                                                                                 'ftp_max_connections_per_ip',
+    #                                                                                                 'ftp_folder',
+    #                                                                                                 'ftp_banner')
+    #     if ipv4:
+    #         self.ftpIpAddressLineEdit.setText(ipv4)
+    #     elif ipv6:
+    #         self.ftpIpAddressLineEdit.setText(ipv6)
+    #     else:
+    #         self.ftpIpAddressLineEdit.setText('Unable to obtain your IP')
+    #
+    #     if port:
+    #         self.ftpPortSpinBox.setValue(port)
+    #     else:
+    #         self.ftpPortSpinBox.setValue(21)
+    #
+    #     if max_conn:
+    #         self.ftpMaxConnectionsSpinBox.setValue(max_conn)
+    #     else:
+    #         self.ftpMaxConnectionsSpinBox.setValue(5)
+    #
+    #     if max_conn_per_ip:
+    #         self.ftpMaxConnectionsPerIPSpinBox.setValue(max_conn_per_ip)
+    #     else:
+    #         self.ftpMaxConnectionsPerIPSpinBox.setValue(1)
+    #
+    #     if folder:
+    #         self.ftpFolderLineEdit.setText(folder)
+    #     else:
+    #         self.ftpFolderLineEdit.setText('')
+    #
+    #     if banner:
+    #         self.ftpBannerPlainTextEdit.setPlainText(banner)
+    #     else:
+    #         self.ftpBannerPlainTextEdit.setPlainText('')
