@@ -1,0 +1,3 @@
+Rules:
+Always is going to exist a Configuration row
+Contact.mac_address, Configuration.mac_address should always follow the next notation: aaaa.bbbb.cccc
