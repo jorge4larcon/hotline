@@ -150,11 +150,17 @@ def get_contact(conn: sqlite3.Connection, mac_address, *args):
     fields = [*filter(lambda f: f in CONTACT_FIELDS, args)]
     if fields:
         with conn:
-            statement = (f"SELECT {', '.join(fields)} FROM Contact WHERE mac_address = ?")
+            statement = f"SELECT {', '.join(fields)} FROM Contact WHERE mac_address = ?"
             values = conn.execute(statement, (mac_address,)).fetchone()
             if not values:
                 raise sqlite3.Error(f"The Contact with the mac_address '{mac_address}' does not exist")
         return dict(zip(fields, values))
+
+
+def contacts(conn: sqlite3.Connection, mac_address=None):
+    with conn:
+        return conn.execute(
+            'SELECT mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port FROM Contact ORDER BY name ASC').fetchall()
 
 
 def insert_sent_message(conn: sqlite3.Connection, sent_timestamp, receiver_contact, content, received_timestamp):
@@ -191,6 +197,12 @@ def get_sent_message(conn: sqlite3.Connection, sent_timestamp, *args):
         return dict(zip(fields, values))
 
 
+def sent_messages(conn: sqlite3.Connection):
+    with conn:
+        return conn.execute(
+            'SELECT sent_timestamp, receiver_contact, content, received_timestamp FROM SentMessage ORDER BY sent_timestamp DESC').fetchall()
+
+
 def insert_received_message(conn: sqlite3.Connection, received_timestamp, sender_contact, content, sent_timestamp):
     statement = 'INSERT INTO ReceivedMessage(received_timestamp, sender_contact, content, sent_timestamp) ' \
                 'VALUES (?, ?, ?, ?)'
@@ -224,6 +236,12 @@ def get_received_message(conn: sqlite3.Connection, received_timestamp, *args):
                 raise sqlite3.Error(
                     f"The ReceivedMessage with the received_timestamp '{received_timestamp}' does not exist")
         return dict(zip(fields, values))
+
+
+def received_messages(conn: sqlite3.Connection):
+    with conn:
+        return conn.execute(
+            'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC').fetchall()
 
 
 def get_connection():
