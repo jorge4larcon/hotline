@@ -19,6 +19,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 import os
+import dbfunctions
 
 
 class Ui_HotlineMainWindow(object):
@@ -677,15 +678,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         # The rule to save values in the database is when signal editingFinished
         # FTP tab
-        self.ftpPortSpinBox.editingFinished.connect(self.ftpPortSpinBoxEditingFinished)
-        self.ftpMaxConnectionsSpinBox.editingFinished.connect(self.ftpMaxConnectionsSpinBoxEditingFinished)
-        self.ftpMaxConnectionsPerIPSpinBox.editingFinished.connect(self.ftpMaxConnectionsPerIPSpinBoxEditingFinished)
-        self.ftpFolderLineEdit.editingFinished.connect(self.ftpFolderLineEditEditingFinished)
-        # When start is pressed banner is saved
+        # When start is pressed the values are saved
 
     def ftpStartPushButtonAction(self):
-        logging.info('Somebody here?')
-        # Verify data and if correct, save it to db
         address = self.ftpIpAddressLineEdit.text()
         port = self.ftpPortSpinBox.value()
         max_connections = self.ftpMaxConnectionsSpinBox.value()
@@ -697,7 +692,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             logging.info(f"Folder selected: '{folder}'")
             self.ftpFolderLineEdit.setText(folder)
 
-        updated_server = model.FtpServer(folder, banner, max_connections, max_connections_per_ip, True, port)
         logging.info('Starting FTP server...')
 
     def onTabChange(self, i):
@@ -709,6 +703,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         elif index == 1:
             logging.info("Updating 'Contacts' tab")
         elif index == 2:
+            logging.info("Updating 'FTP' tab")
             self.update_ftp_tab()
         elif index == 3:
             logging.info("Updating 'Interlocutor' tab")
@@ -719,40 +714,44 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     def update_ftp_tab(self):
         logging.info("Updating 'FTP' tab")
-        user = self.database.user()
-        ftp = self.database.ftp_server()
-        ipv4 = user.ipv4_address
-        port = ftp.port
-        banner = ftp.banner
-        max_connections = ftp.max_connections
-        max_connections_per_ip = ftp.max_connections_per_ip
-        folder = ftp.folder_path
-        is_running = ftp.is_running
-        self.ftpStartPushButton.setEnabled(not is_running)
-        self.ftpShutdownPushButton.setEnabled(is_running)
-        self.ftpIpAddressLineEdit.setText(ipv4)
-        self.ftpPortSpinBox.setValue(port)
-        self.ftpMaxConnectionsSpinBox.setValue(max_connections)
-        self.ftpMaxConnectionsPerIPSpinBox.setValue(max_connections_per_ip)
-        self.ftpBannerPlainTextEdit.setPlainText(banner)
-        self.ftpFolderLineEdit.setText(folder)
 
-    def ftpPortSpinBoxEditingFinished(self):
-        ftp = self.database.ftp_server()
-        ftp.port = self.ftpPortSpinBox.value()
-        self.database.update_ftp_server(ftp)
+        conn = dbfunctions.get_connection()
+        ipv4, ipv6, port, max_conn, max_conn_per_ip, folder, banner = dbfunctions.get_configuration(conn,
+                                                                                                    'ipv4_address',
+                                                                                                    'ipv6_address',
+                                                                                                    'ftp_port',
+                                                                                                    'ftp_max_connections',
+                                                                                                    'ftp_max_connections_per_ip',
+                                                                                                    'ftp_folder',
+                                                                                                    'ftp_banner')
+        if ipv4:
+            self.ftpIpAddressLineEdit.setText(ipv4)
+        elif ipv6:
+            self.ftpIpAddressLineEdit.setText(ipv6)
+        else:
+            self.ftpIpAddressLineEdit.setText('Unable to obtain your IP')
 
-    def ftpMaxConnectionsSpinBoxEditingFinished(self):
-        ftp = self.database.ftp_server()
-        ftp.max_connections = self.ftpMaxConnectionsSpinBox.value()
-        self.database.update_ftp_server(ftp)
+        if port:
+            self.ftpPortSpinBox.setValue(port)
+        else:
+            self.ftpPortSpinBox.setValue(21)
 
-    def ftpMaxConnectionsPerIPSpinBoxEditingFinished(self):
-        ftp = self.database.ftp_server()
-        ftp.max_connections_per_ip = self.ftpMaxConnectionsPerIPSpinBox.value()
-        self.database.update_ftp_server(ftp)
+        if max_conn:
+            self.ftpMaxConnectionsSpinBox.setValue(max_conn)
+        else:
+            self.ftpMaxConnectionsSpinBox.setValue(5)
 
-    def ftpFolderLineEditEditingFinished(self):
-        ftp = self.database.ftp_server()
-        ftp.folder_path = self.ftpFolderLineEdit.text()
-        self.database.update_ftp_server(ftp)
+        if max_conn_per_ip:
+            self.ftpMaxConnectionsPerIPSpinBox.setValue(max_conn_per_ip)
+        else:
+            self.ftpMaxConnectionsPerIPSpinBox.setValue(1)
+
+        if folder:
+            self.ftpFolderLineEdit.setText(folder)
+        else:
+            self.ftpFolderLineEdit.setText('')
+
+        if banner:
+            self.ftpBannerPlainTextEdit.setPlainText(banner)
+        else:
+            self.ftpBannerPlainTextEdit.setPlainText('')
