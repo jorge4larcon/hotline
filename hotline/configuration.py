@@ -19,8 +19,8 @@ def setup_network_information():
 
 def configure_logging(level):
     logging.basicConfig(
-        # format='[%(asctime)s] [thread-id=%(thread)d] [thread-name=%(threadName)s] %(levelname)s: %(message)s',
-        format='[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+        format='[%(asctime)s] [thread-id=%(thread)d] [thread-name=%(threadName)s] %(levelname)s: %(message)s',
+        # format='[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
         level=level)
 
 

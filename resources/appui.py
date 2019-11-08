@@ -1,26 +1,12 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\media\appui.ui'
+# Form implementation generated from reading ui file '.\appui.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file '.\media\appui.ui'
-#
-# Created by: PyQt5 UI code generator 5.9.2
-#
-# WARNING! All changes made in this file will be lost!
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-import logging
-import os
-import dbfunctions
-
 
 class Ui_HotlineMainWindow(object):
     def setupUi(self, HotlineMainWindow):
@@ -226,7 +212,7 @@ class Ui_HotlineMainWindow(object):
         self.ftpIpAddressLineEdit.setMinimumSize(QtCore.QSize(110, 0))
         self.ftpIpAddressLineEdit.setMaximumSize(QtCore.QSize(110, 16777215))
         self.ftpIpAddressLineEdit.setText("")
-        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.ftpIpAddressLineEdit.setObjectName("ftpIpAddressLineEdit")
         self.formLayout_5.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.ftpIpAddressLineEdit)
         self.portLabel = QtWidgets.QLabel(self.ftpServerConfigGroupBox)
@@ -620,8 +606,7 @@ class Ui_HotlineMainWindow(object):
         self.maxConnectionsPerIPLabel.setText(_translate("HotlineMainWindow", "Max connections per IP:"))
         self.folderLabel.setText(_translate("HotlineMainWindow", "Folder:"))
         self.groupBox_7.setTitle(_translate("HotlineMainWindow", "Banner"))
-        self.ftpBannerPlainTextEdit.setPlaceholderText(
-            _translate("HotlineMainWindow", "Type here a creative banner message :)"))
+        self.ftpBannerPlainTextEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here a creative banner message :)"))
         self.groupBox_8.setTitle(_translate("HotlineMainWindow", "Options"))
         self.ftpStartPushButton.setText(_translate("HotlineMainWindow", "Start"))
         self.ftpShutdownPushButton.setText(_translate("HotlineMainWindow", "Shutdown"))
@@ -641,198 +626,25 @@ class Ui_HotlineMainWindow(object):
         self.groupBox_11.setTitle(_translate("HotlineMainWindow", "Options"))
         self.interSignUpPushButton.setText(_translate("HotlineMainWindow", "Sign up"))
         self.groupBox_3.setTitle(_translate("HotlineMainWindow", "Interlocutor database"))
-        self.interSearchLineEdit.setPlaceholderText(
-            _translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
+        self.interSearchLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
         self.interSearchCriteriaComboBox.setItemText(0, _translate("HotlineMainWindow", "Name"))
         self.interSearchCriteriaComboBox.setItemText(1, _translate("HotlineMainWindow", "MAC address"))
         self.interSearchPushButton.setText(_translate("HotlineMainWindow", "Get"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor),
-                                  _translate("HotlineMainWindow", "Interlocutor"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor), _translate("HotlineMainWindow", "Interlocutor"))
         self.groupBox_4.setTitle(_translate("HotlineMainWindow", "My downloads"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1),
-                                    _translate("HotlineMainWindow", "192.168.1.70"))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1), _translate("HotlineMainWindow", "192.168.1.70"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("HotlineMainWindow", "Tab 2"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads),
-                                  _translate("HotlineMainWindow", "Downloads"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads), _translate("HotlineMainWindow", "Downloads"))
         self.groupBox_5.setTitle(_translate("HotlineMainWindow", "My notifications"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications),
-                                  _translate("HotlineMainWindow", "Notifications"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), _translate("HotlineMainWindow", "Notifications"))
 
 
-class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
-    def __init__(self, *args, **kwargs):
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
-        self.setupUi(self)
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    HotlineMainWindow = QtWidgets.QMainWindow()
+    ui = Ui_HotlineMainWindow()
+    ui.setupUi(HotlineMainWindow)
+    HotlineMainWindow.show()
+    sys.exit(app.exec_())
 
-        # When user changes between tabs, keep the information ordered
-        self.tabWidget.currentChanged.connect(self.onTabChange)
-
-        # FTP tab
-        self.ftpIpAddressLineEdit.setReadOnly(True)
-        self.ftpShutdownPushButton.setEnabled(False)
-        self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
-
-        # Interlocutor client tab
-        self.myContactInfoIpAddressLineEdit.setReadOnly(True)
-        self.myContactInfoMacAddressLineEdit.setReadOnly(True)
-
-        # Contacts table
-        contactsTableHeaders = ['Name', 'MAC Address', 'IPv4 Address', 'IPv6 Address',
-                                'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
-        self.contactsTableWidget.setColumnCount(len(contactsTableHeaders))
-        self.contactsTableWidget.setHorizontalHeaderLabels(contactsTableHeaders)
-        contactsTableHeader = self.contactsTableWidget.horizontalHeader()
-        for col in range(len(contactsTableHeaders)):
-            contactsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
-
-        self.loadFtpConfiguration()
-        self.loadInterlocutorConfiguration()
-        self.loadContactsTable()
-        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
-
-    @QtCore.pyqtSlot(int, int)
-    def update_contact_from_table_item(self, row, cell):
-        mac_address = self.contactsTableWidget.item(row, 1).text()
-        new_value = self.contactsTableWidget.item(row, cell).text()
-        if cell == 0:
-            field = 'name'
-        elif cell == 2:
-            field = 'ipv4_address'
-        elif cell == 3:
-            field = 'ipv6_address'
-
-        logging.info(f"New value '{new_value}' for field '{field}' for user '{mac_address}'")
-
-    @QtCore.pyqtSlot(int)
-    def update_contact_inbox_port(self, port):
-        spin = self.sender()
-        if spin:
-            row = self.contactsTableWidget.indexAt(spin.pos()).row()
-            mac_address = self.contactsTableWidget.item(row, 1).text()
-            logging.info(f"New value '{port}' for field 'inbox_port' for user '{mac_address}'")
-
-    @QtCore.pyqtSlot(int)
-    def update_contact_ftp_port(self, port):
-        spin = self.sender()
-        if spin:
-            row = self.contactsTableWidget.indexAt(spin.pos()).row()
-            mac_address = self.contactsTableWidget.item(row, 1).text()
-            logging.info(f"New value '{port}' for field 'ftp_port' for user '{mac_address}'")
-
-    @QtCore.pyqtSlot()
-    def delete_contact_row(self):
-        btn = self.sender()
-        if btn:
-            row = self.contactsTableWidget.indexAt(btn.pos()).row()
-            mac_address = self.contactsTableWidget.item(row, 1).text()
-            logging.info(f"Deleting Contact '{mac_address}'...")
-            self.contactsTableWidget.removeRow(row)
-
-    def loadFtpConfiguration(self):
-        conn = dbfunctions.get_connection()
-        ipv4, ipv6, max_conn, max_conn_per_ip, folder, banner, port = dbfunctions.get_configuration(
-            conn, 'ipv4_address', 'ipv6_address', 'ftp_max_connections', 'ftp_max_connections_per_ip', 'ftp_folder',
-            'ftp_banner', 'ftp_port')
-        conn.close()
-        ip = ipv4 if ipv4 else (ipv6 if ipv6 else 'Could not obtain your IP address')
-        max_conn = max_conn if max_conn else 10
-        max_conn_per_ip = max_conn_per_ip if max_conn_per_ip else 1
-        folder = folder if folder else ''
-        banner = banner if banner is not None else ''
-        port = port if port is not None else 21
-        self.ftpIpAddressLineEdit.setText(ip)
-        self.ftpMaxConnectionsSpinBox.setValue(max_conn)
-        self.ftpMaxConnectionsPerIPSpinBox.setValue(max_conn_per_ip)
-        self.ftpFolderLineEdit.setText(folder)
-        self.ftpBannerPlainTextEdit.setPlainText(banner)
-        self.ftpPortSpinBox.setValue(port)
-
-    def loadInterlocutorConfiguration(self):
-        conn = dbfunctions.get_connection()
-        inter_address, inter_port, inter_pass, ipv4, username, inbox_port, mac_address, get_only_by_mac = dbfunctions.get_configuration(
-            conn, 'interlocutor_address', 'interlocutor_port', 'interlocutor_password', 'ipv4_address', 'username',
-            'inbox_port', 'mac_address', 'get_only_by_mac')
-        conn.close()
-        inter_address = inter_address if inter_address else ''
-        inter_port = inter_port if inter_port is not None else 42000
-        inter_password = inter_pass if inter_pass is not None else 'secret'
-        ipv4 = ipv4 if ipv4 else 'Could not obtain your IP address'
-        mac_address = mac_address if mac_address else 'Could not obtain your MAC address'
-        username = username if username else 'Muhammad'
-        get_only_by_mac = bool(get_only_by_mac)
-        self.interIpAddressLineEdit.setText(inter_address)
-        self.interPortSpinBox.setValue(inter_port)
-        self.interPasswordLineEdit.setText(inter_password)
-        self.myContactInfoIpAddressLineEdit.setText(ipv4)
-        self.myContactInfoMacAddressLineEdit.setText(mac_address)
-        self.myContactInfoNameLineEdit.setText(username)
-        self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
-
-    def loadContactsTable(self):
-        conn = dbfunctions.get_connection()
-        contacts = dbfunctions.contacts(conn)
-        conn.close()
-        self.contactsTableWidget.setRowCount(len(contacts))
-        for row, contact in enumerate(contacts):
-            self.contactsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(str(contact['name'])))
-            mac_address = QtWidgets.QTableWidgetItem(str(contact['mac_address']))
-            mac_address.setFlags(mac_address.flags() ^ QtCore.Qt.ItemIsEditable)
-            self.contactsTableWidget.setItem(row, 1, mac_address)
-            self.contactsTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(str(contact['ipv4_address'])))
-            self.contactsTableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(str(contact['ipv6_address'])))
-
-            inbox_port_spin = QtWidgets.QSpinBox(self.contactsTableWidget)
-            inbox_port_spin.setMaximum(65535)
-            inbox_port_spin.setMinimum(0)
-            inbox_port_spin.setValue(contact['inbox_port'])
-            inbox_port_spin.valueChanged.connect(self.update_contact_inbox_port)
-            self.contactsTableWidget.setCellWidget(row, 4, inbox_port_spin)
-
-            ftp_port_spin = QtWidgets.QSpinBox(self.contactsTableWidget)
-            ftp_port_spin.setMaximum(65535)
-            ftp_port_spin.setMinimum(0)
-            ftp_port_spin.setValue(contact['ftp_port'])
-            ftp_port_spin.valueChanged.connect(self.update_contact_ftp_port)
-            self.contactsTableWidget.setCellWidget(row, 5, ftp_port_spin)
-
-            chat_btn = QtWidgets.QPushButton(self.contactsTableWidget)
-            chat_btn.setText('Chat')
-            self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
-            files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
-            files_btn.setText('Files')
-            self.contactsTableWidget.setCellWidget(row, 7, files_btn)
-            delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
-            delete_btn.setText('Delete')
-            delete_btn.clicked.connect(self.delete_contact_row)
-            self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
-
-    def ftpStartPushButtonAction(self):
-        address = self.ftpIpAddressLineEdit.text()
-        port = self.ftpPortSpinBox.value()
-        max_connections = self.ftpMaxConnectionsSpinBox.value()
-        max_connections_per_ip = self.ftpMaxConnectionsPerIPSpinBox.value()
-        banner = self.ftpBannerPlainTextEdit.toPlainText()
-        folder = self.ftpFolderLineEdit.text().strip()
-        if not os.path.isdir(folder):
-            folder = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to share')
-            logging.info(f"Folder selected: '{folder}'")
-            self.ftpFolderLineEdit.setText(folder)
-
-        logging.info('Starting FTP server...')
-
-    def onTabChange(self, i):
-        self.update_tab(i)
-
-    def update_tab(self, index):
-        if index == 0:
-            logging.info("Updating 'Chats' tab")
-        elif index == 1:
-            logging.info("Updating 'Contacts' tab")
-        elif index == 2:
-            logging.info("Updating 'FTP' tab")
-        elif index == 3:
-            logging.info("Updating 'Interlocutor' tab")
-        elif index == 4:
-            logging.info("Updating 'Downloads' tab")
-        elif index == 5:
-            logging.info("Updating 'Notifications' tab")

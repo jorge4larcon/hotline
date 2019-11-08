@@ -16,7 +16,8 @@ CONFIGURATION_FIELDS = {
     'ftp_folder': {'editable': True, 'validator': None},
     'interlocutor_address': {'editable': True, 'validator': None},
     'interlocutor_port': {'editable': True, 'validator': None},
-    'interlocutor_password': {'editable': True, 'validator': None}
+    'interlocutor_password': {'editable': True, 'validator': None},
+    'get_only_by_mac': {'editable': True, 'validator': None}
 }
 
 CONTACT_FIELDS = {

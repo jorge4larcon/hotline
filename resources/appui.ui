@@ -1,0 +1,1099 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HotlineMainWindow</class>
+ <widget class="QMainWindow" name="HotlineMainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Hotline</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tabChats">
+       <attribute name="title">
+        <string>Chats</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_26">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_16">
+          <item>
+           <widget class="QGroupBox" name="conversationsGroupBox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>221</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>221</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="title">
+             <string>Conversations</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_23">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_21">
+               <item>
+                <widget class="QTableWidget" name="conversationsTableWidget"/>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <item>
+                  <spacer name="horizontalSpacer_4">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="newChatPushButton">
+                   <property name="text">
+                    <string>New chat</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="chatGroupBox">
+            <property name="title">
+             <string>A_Username</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_25">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_24">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_14">
+                 <item>
+                  <spacer name="horizontalSpacer_5">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_13">
+                   <item>
+                    <widget class="QPushButton" name="chatMateFilesPushButton">
+                     <property name="text">
+                      <string>Files</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="chatMateAddToContactsPushButton">
+                     <property name="text">
+                      <string>Add to contacts</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QTextEdit" name="textEdit"/>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_15">
+                 <item>
+                  <widget class="QLineEdit" name="messageLineEdit">
+                   <property name="placeholderText">
+                    <string>Type your message here</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="sendMessagePushButton">
+                   <property name="text">
+                    <string>Send</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabContacts">
+       <attribute name="title">
+        <string>Contacts</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_29">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_28">
+          <item>
+           <widget class="QGroupBox" name="contactsDbGroupBox">
+            <property name="title">
+             <string>Contacts database</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_27">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_3">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout">
+                 <item>
+                  <widget class="QLineEdit" name="searchContactLineEdit">
+                   <property name="placeholderText">
+                    <string>Type here to search contacts</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="findContactPushButton">
+                   <property name="text">
+                    <string>Find</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="searchContactCriteriaComboBox">
+                   <item>
+                    <property name="text">
+                     <string>Name</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>MAC address</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QTableWidget" name="contactsTableWidget"/>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="newContactGroupBox">
+            <property name="title">
+             <string>New contact</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_2">
+                 <item>
+                  <layout class="QFormLayout" name="formLayout">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="nameLabel">
+                     <property name="text">
+                      <string>Name:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="newContactNameLineEdit"/>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_2">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="macAddressLabel">
+                     <property name="text">
+                      <string>MAC address:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QLineEdit" name="newContactMacAddressLineEdit"/>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_3">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="inboxPortLabel">
+                     <property name="text">
+                      <string>Inbox port:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QSpinBox" name="newContactInboxPortSpinBox">
+                     <property name="maximum">
+                      <number>65535</number>
+                     </property>
+                     <property name="value">
+                      <number>42000</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QFormLayout" name="formLayout_4">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="fTPPortLabel">
+                     <property name="text">
+                      <string>FTP port:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="1">
+                    <widget class="QSpinBox" name="newContactFtpPortSpinBox">
+                     <property name="maximum">
+                      <number>65535</number>
+                     </property>
+                     <property name="value">
+                      <number>21</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>13</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QPushButton" name="addNewContactPushButton">
+                 <property name="text">
+                  <string>Add</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabFTP">
+       <attribute name="title">
+        <string>FTP</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_31">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_19">
+            <item>
+             <widget class="QGroupBox" name="ftpServerConfigGroupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>254</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>254</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>FTP server configuration</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <item>
+                <layout class="QFormLayout" name="formLayout_5">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="iPAddressLabel">
+                   <property name="text">
+                    <string>IP address:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="ftpIpAddressLineEdit">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>110</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="portLabel">
+                   <property name="text">
+                    <string>Port:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="ftpPortSpinBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                   <property name="value">
+                    <number>21</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="maxConnectionsLabel">
+                   <property name="text">
+                    <string>Max connections:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QSpinBox" name="ftpMaxConnectionsSpinBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>20</number>
+                   </property>
+                   <property name="value">
+                    <number>5</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="maxConnectionsPerIPLabel">
+                   <property name="text">
+                    <string>Max connections per IP:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QSpinBox" name="ftpMaxConnectionsPerIPSpinBox">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>5</number>
+                   </property>
+                   <property name="value">
+                    <number>1</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="folderLabel">
+                   <property name="text">
+                    <string>Folder:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QLineEdit" name="ftpFolderLineEdit">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="minimumSize">
+                    <size>
+                     <width>110</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>110</width>
+                     <height>16777215</height>
+                    </size>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_7">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>254</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>254</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Banner</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_15">
+               <item>
+                <widget class="QPlainTextEdit" name="ftpBannerPlainTextEdit">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>234</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>234</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="plainText">
+                  <string/>
+                 </property>
+                 <property name="placeholderText">
+                  <string>Type here a creative banner message :)</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>248</width>
+                <height>15</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_8">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>254</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>254</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Options</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_16">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_4">
+                   <item>
+                    <spacer name="horizontalSpacer_2">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>80</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="ftpStartPushButton">
+                     <property name="text">
+                      <string>Start</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="ftpShutdownPushButton">
+                     <property name="text">
+                      <string>Shutdown</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_20">
+            <item>
+             <widget class="QGroupBox" name="groupBox_9">
+              <property name="title">
+               <string>Connected users</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_17">
+               <item>
+                <widget class="QTableWidget" name="ftpConnectedUsersTableWidget"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_10">
+              <property name="title">
+               <string>Files</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_18">
+               <item>
+                <widget class="QTableWidget" name="ftpFilesTableWidget"/>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabInterlocutor">
+       <attribute name="title">
+        <string>Interlocutor</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_30">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_9">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_22">
+            <item>
+             <widget class="QGroupBox" name="groupBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>220</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>220</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Server information</string>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_6">
+               <item>
+                <layout class="QFormLayout" name="formLayout_6">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="iPAddressLabel_2">
+                   <property name="text">
+                    <string>IP address:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="interIpAddressLineEdit">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="portLabel_2">
+                   <property name="text">
+                    <string>Port:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="interPortSpinBox">
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                   <property name="value">
+                    <number>42000</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="passwordLabel">
+                   <property name="text">
+                    <string>Password:           </string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QLineEdit" name="interPasswordLineEdit">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>220</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>220</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>My contact information</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_6">
+               <item>
+                <layout class="QFormLayout" name="formLayout_7">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="nameLabel_2">
+                   <property name="text">
+                    <string>Name:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="myContactInfoNameLineEdit">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="iPLabel">
+                   <property name="text">
+                    <string>IP address:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="myContactInfoIpAddressLineEdit"/>
+                 </item>
+                 <item row="3" column="0">
+                  <widget class="QLabel" name="mACAddressLabel">
+                   <property name="text">
+                    <string>MAC address:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="3" column="1">
+                  <widget class="QLineEdit" name="myContactInfoMacAddressLineEdit">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="0">
+                  <widget class="QLabel" name="onlyByMACLabel">
+                   <property name="text">
+                    <string>Get only by MAC:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="4" column="1">
+                  <widget class="QCheckBox" name="myContactInfoGetOnlyByMacCheckBox"/>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QLabel" name="inboxPortLabel_2">
+                   <property name="text">
+                    <string>Inbox port:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QSpinBox" name="myContactInfoInboxPortSpinBox">
+                   <property name="maximum">
+                    <number>65535</number>
+                   </property>
+                   <property name="value">
+                    <number>42000</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QGroupBox" name="groupBox_11">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>220</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>220</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="title">
+               <string>Options</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_10">
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_9">
+                 <property name="sizeConstraint">
+                  <enum>QLayout::SetFixedSize</enum>
+                 </property>
+                 <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_8">
+                   <item>
+                    <spacer name="horizontalSpacer_3">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::Fixed</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>160</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="interSignUpPushButton">
+                     <property name="text">
+                      <string>Sign up</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="groupBox_3">
+            <property name="title">
+             <string>Interlocutor database</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_8">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_7">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_7">
+                 <item>
+                  <widget class="QLineEdit" name="interSearchLineEdit">
+                   <property name="placeholderText">
+                    <string>Type here the name or MAC address of the user you want to get</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="interSearchCriteriaComboBox">
+                   <item>
+                    <property name="text">
+                     <string>Name</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>MAC address</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="interSearchPushButton">
+                   <property name="text">
+                    <string>Get</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QTableWidget" name="interDbTableWidget"/>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabDownloads">
+       <attribute name="title">
+        <string>Downloads</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_12">
+        <item>
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string>My downloads</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_11">
+           <item>
+            <widget class="QTabWidget" name="tabWidget_2">
+             <property name="tabPosition">
+              <enum>QTabWidget::South</enum>
+             </property>
+             <property name="currentIndex">
+              <number>1</number>
+             </property>
+             <property name="tabsClosable">
+              <bool>true</bool>
+             </property>
+             <property name="movable">
+              <bool>true</bool>
+             </property>
+             <widget class="QWidget" name="tab_1">
+              <attribute name="title">
+               <string>192.168.1.70</string>
+              </attribute>
+             </widget>
+             <widget class="QWidget" name="tab_2">
+              <attribute name="title">
+               <string>Tab 2</string>
+              </attribute>
+             </widget>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabNotifications">
+       <attribute name="title">
+        <string>Notifications</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_14">
+        <item>
+         <widget class="QGroupBox" name="groupBox_5">
+          <property name="title">
+           <string>My notifications</string>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_13">
+           <item>
+            <widget class="QTableWidget" name="notificationsTableWidget"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <tabstops>
+  <tabstop>newContactInboxPortSpinBox</tabstop>
+  <tabstop>newContactFtpPortSpinBox</tabstop>
+  <tabstop>addNewContactPushButton</tabstop>
+  <tabstop>ftpIpAddressLineEdit</tabstop>
+  <tabstop>ftpPortSpinBox</tabstop>
+  <tabstop>ftpMaxConnectionsSpinBox</tabstop>
+  <tabstop>ftpMaxConnectionsPerIPSpinBox</tabstop>
+  <tabstop>ftpBannerPlainTextEdit</tabstop>
+  <tabstop>ftpStartPushButton</tabstop>
+  <tabstop>ftpShutdownPushButton</tabstop>
+  <tabstop>interIpAddressLineEdit</tabstop>
+  <tabstop>interPortSpinBox</tabstop>
+  <tabstop>interPasswordLineEdit</tabstop>
+  <tabstop>myContactInfoNameLineEdit</tabstop>
+  <tabstop>myContactInfoIpAddressLineEdit</tabstop>
+  <tabstop>myContactInfoInboxPortSpinBox</tabstop>
+  <tabstop>myContactInfoMacAddressLineEdit</tabstop>
+  <tabstop>myContactInfoGetOnlyByMacCheckBox</tabstop>
+  <tabstop>interSignUpPushButton</tabstop>
+  <tabstop>interSearchLineEdit</tabstop>
+  <tabstop>interSearchPushButton</tabstop>
+  <tabstop>interDbTableWidget</tabstop>
+  <tabstop>searchContactLineEdit</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>searchContactCriteriaComboBox</tabstop>
+  <tabstop>contactsTableWidget</tabstop>
+  <tabstop>newContactNameLineEdit</tabstop>
+  <tabstop>newContactMacAddressLineEdit</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>
