@@ -18,14 +18,14 @@ if __name__ == '__main__':
     except FileNotFoundError as f:
         logging.critical(f)
         logging.info('Closing application...')
-        sys.exit(1)
+        sys.exit(f.errno)
     except Exception as e:
         logging.error(e)
 
     try:
         configuration.setup_network_information()
     except Exception as e:
-        logging.error('Could not configure the network information')
+        logging.error(f"Could not configure the network information: '{e}'")
 
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     window = ui.HotlineMainWindow()
