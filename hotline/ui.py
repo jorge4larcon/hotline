@@ -20,12 +20,13 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 import os
 import dbfunctions
+import valid
 
 
 class Ui_HotlineMainWindow(object):
     def setupUi(self, HotlineMainWindow):
         HotlineMainWindow.setObjectName("HotlineMainWindow")
-        HotlineMainWindow.resize(800, 600)
+        HotlineMainWindow.resize(792, 600)
         self.centralwidget = QtWidgets.QWidget(HotlineMainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -104,10 +105,10 @@ class Ui_HotlineMainWindow(object):
         self.tabWidget.addTab(self.tabChats, "")
         self.tabContacts = QtWidgets.QWidget()
         self.tabContacts.setObjectName("tabContacts")
-        self.verticalLayout_29 = QtWidgets.QVBoxLayout(self.tabContacts)
-        self.verticalLayout_29.setObjectName("verticalLayout_29")
-        self.verticalLayout_28 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_28 = QtWidgets.QVBoxLayout(self.tabContacts)
         self.verticalLayout_28.setObjectName("verticalLayout_28")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.contactsDbGroupBox = QtWidgets.QGroupBox(self.tabContacts)
         self.contactsDbGroupBox.setObjectName("contactsDbGroupBox")
         self.verticalLayout_27 = QtWidgets.QVBoxLayout(self.contactsDbGroupBox)
@@ -134,64 +135,121 @@ class Ui_HotlineMainWindow(object):
         self.contactsTableWidget.setRowCount(0)
         self.verticalLayout_3.addWidget(self.contactsTableWidget)
         self.verticalLayout_27.addLayout(self.verticalLayout_3)
-        self.verticalLayout_28.addWidget(self.contactsDbGroupBox)
+        self.verticalLayout_2.addWidget(self.contactsDbGroupBox)
         self.newContactGroupBox = QtWidgets.QGroupBox(self.tabContacts)
         self.newContactGroupBox.setObjectName("newContactGroupBox")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.newContactGroupBox)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
+        self.horizontalLayout_21 = QtWidgets.QHBoxLayout(self.newContactGroupBox)
+        self.horizontalLayout_21.setObjectName("horizontalLayout_21")
+        self.horizontalLayout_20 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_20.setObjectName("horizontalLayout_20")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
-        self.formLayout = QtWidgets.QFormLayout()
-        self.formLayout.setObjectName("formLayout")
         self.nameLabel = QtWidgets.QLabel(self.newContactGroupBox)
         self.nameLabel.setObjectName("nameLabel")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.nameLabel)
+        self.horizontalLayout_2.addWidget(self.nameLabel)
         self.newContactNameLineEdit = QtWidgets.QLineEdit(self.newContactGroupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.newContactNameLineEdit.sizePolicy().hasHeightForWidth())
+        self.newContactNameLineEdit.setSizePolicy(sizePolicy)
+        self.newContactNameLineEdit.setMinimumSize(QtCore.QSize(30, 0))
+        self.newContactNameLineEdit.setMaximumSize(QtCore.QSize(115, 16777215))
+        self.newContactNameLineEdit.setText("")
         self.newContactNameLineEdit.setObjectName("newContactNameLineEdit")
-        self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.newContactNameLineEdit)
-        self.horizontalLayout_2.addLayout(self.formLayout)
-        self.formLayout_2 = QtWidgets.QFormLayout()
-        self.formLayout_2.setObjectName("formLayout_2")
+        self.horizontalLayout_2.addWidget(self.newContactNameLineEdit)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.macAddressLabel = QtWidgets.QLabel(self.newContactGroupBox)
         self.macAddressLabel.setObjectName("macAddressLabel")
-        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.macAddressLabel)
+        self.horizontalLayout_3.addWidget(self.macAddressLabel)
         self.newContactMacAddressLineEdit = QtWidgets.QLineEdit(self.newContactGroupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.newContactMacAddressLineEdit.sizePolicy().hasHeightForWidth())
+        self.newContactMacAddressLineEdit.setSizePolicy(sizePolicy)
+        self.newContactMacAddressLineEdit.setMinimumSize(QtCore.QSize(65, 0))
+        self.newContactMacAddressLineEdit.setMaximumSize(QtCore.QSize(91, 16777215))
+        self.newContactMacAddressLineEdit.setText("")
         self.newContactMacAddressLineEdit.setObjectName("newContactMacAddressLineEdit")
-        self.formLayout_2.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.newContactMacAddressLineEdit)
-        self.horizontalLayout_2.addLayout(self.formLayout_2)
-        self.formLayout_3 = QtWidgets.QFormLayout()
-        self.formLayout_3.setObjectName("formLayout_3")
+        self.horizontalLayout_3.addWidget(self.newContactMacAddressLineEdit)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_3)
+        self.horizontalLayout_10 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_10.setObjectName("horizontalLayout_10")
+        self.label = QtWidgets.QLabel(self.newContactGroupBox)
+        self.label.setObjectName("label")
+        self.horizontalLayout_10.addWidget(self.label)
+        self.newContactIpv4AddressLineEdit = QtWidgets.QLineEdit(self.newContactGroupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.newContactIpv4AddressLineEdit.sizePolicy().hasHeightForWidth())
+        self.newContactIpv4AddressLineEdit.setSizePolicy(sizePolicy)
+        self.newContactIpv4AddressLineEdit.setMinimumSize(QtCore.QSize(80, 0))
+        self.newContactIpv4AddressLineEdit.setMaximumSize(QtCore.QSize(91, 16777215))
+        self.newContactIpv4AddressLineEdit.setText("")
+        self.newContactIpv4AddressLineEdit.setObjectName("newContactIpv4AddressLineEdit")
+        self.horizontalLayout_10.addWidget(self.newContactIpv4AddressLineEdit)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_10)
+        self.horizontalLayout_11 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_11.setObjectName("horizontalLayout_11")
+        self.label_2 = QtWidgets.QLabel(self.newContactGroupBox)
+        self.label_2.setObjectName("label_2")
+        self.horizontalLayout_11.addWidget(self.label_2)
+        self.newContactIpv6AddressLineEdit = QtWidgets.QLineEdit(self.newContactGroupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.newContactIpv6AddressLineEdit.sizePolicy().hasHeightForWidth())
+        self.newContactIpv6AddressLineEdit.setSizePolicy(sizePolicy)
+        self.newContactIpv6AddressLineEdit.setMinimumSize(QtCore.QSize(70, 0))
+        self.newContactIpv6AddressLineEdit.setMaximumSize(QtCore.QSize(165, 16777215))
+        self.newContactIpv6AddressLineEdit.setText("")
+        self.newContactIpv6AddressLineEdit.setObjectName("newContactIpv6AddressLineEdit")
+        self.horizontalLayout_11.addWidget(self.newContactIpv6AddressLineEdit)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_11)
+        self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_18.setObjectName("horizontalLayout_18")
         self.inboxPortLabel = QtWidgets.QLabel(self.newContactGroupBox)
         self.inboxPortLabel.setObjectName("inboxPortLabel")
-        self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.inboxPortLabel)
+        self.horizontalLayout_18.addWidget(self.inboxPortLabel)
         self.newContactInboxPortSpinBox = QtWidgets.QSpinBox(self.newContactGroupBox)
         self.newContactInboxPortSpinBox.setMaximum(65535)
         self.newContactInboxPortSpinBox.setProperty("value", 42000)
         self.newContactInboxPortSpinBox.setObjectName("newContactInboxPortSpinBox")
-        self.formLayout_3.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.newContactInboxPortSpinBox)
-        self.horizontalLayout_2.addLayout(self.formLayout_3)
-        self.formLayout_4 = QtWidgets.QFormLayout()
-        self.formLayout_4.setObjectName("formLayout_4")
+        self.horizontalLayout_18.addWidget(self.newContactInboxPortSpinBox)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_18)
+        self.horizontalLayout_19 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_19.setObjectName("horizontalLayout_19")
         self.fTPPortLabel = QtWidgets.QLabel(self.newContactGroupBox)
         self.fTPPortLabel.setObjectName("fTPPortLabel")
-        self.formLayout_4.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.fTPPortLabel)
+        self.horizontalLayout_19.addWidget(self.fTPPortLabel)
         self.newContactFtpPortSpinBox = QtWidgets.QSpinBox(self.newContactGroupBox)
         self.newContactFtpPortSpinBox.setMaximum(65535)
         self.newContactFtpPortSpinBox.setProperty("value", 21)
         self.newContactFtpPortSpinBox.setObjectName("newContactFtpPortSpinBox")
-        self.formLayout_4.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.newContactFtpPortSpinBox)
-        self.horizontalLayout_2.addLayout(self.formLayout_4)
-        self.horizontalLayout_3.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_19.addWidget(self.newContactFtpPortSpinBox)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_19)
+        self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_17.setObjectName("horizontalLayout_17")
         spacerItem2 = QtWidgets.QSpacerItem(13, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem2)
+        self.horizontalLayout_17.addItem(spacerItem2)
         self.addNewContactPushButton = QtWidgets.QPushButton(self.newContactGroupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.addNewContactPushButton.sizePolicy().hasHeightForWidth())
+        self.addNewContactPushButton.setSizePolicy(sizePolicy)
+        self.addNewContactPushButton.setMinimumSize(QtCore.QSize(70, 0))
+        self.addNewContactPushButton.setMaximumSize(QtCore.QSize(70, 16777215))
         self.addNewContactPushButton.setObjectName("addNewContactPushButton")
-        self.horizontalLayout_3.addWidget(self.addNewContactPushButton)
-        self.verticalLayout_2.addLayout(self.horizontalLayout_3)
-        self.verticalLayout_28.addWidget(self.newContactGroupBox)
-        self.verticalLayout_29.addLayout(self.verticalLayout_28)
+        self.horizontalLayout_17.addWidget(self.addNewContactPushButton)
+        self.horizontalLayout_20.addLayout(self.horizontalLayout_17)
+        self.horizontalLayout_21.addLayout(self.horizontalLayout_20)
+        self.verticalLayout_2.addWidget(self.newContactGroupBox)
+        self.verticalLayout_28.addLayout(self.verticalLayout_2)
         self.tabWidget.addTab(self.tabContacts, "")
         self.tabFTP = QtWidgets.QWidget()
         self.tabFTP.setObjectName("tabFTP")
@@ -227,6 +285,7 @@ class Ui_HotlineMainWindow(object):
         self.ftpIpAddressLineEdit.setMaximumSize(QtCore.QSize(110, 16777215))
         self.ftpIpAddressLineEdit.setText("")
         self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.ftpIpAddressLineEdit.setPlaceholderText("")
         self.ftpIpAddressLineEdit.setObjectName("ftpIpAddressLineEdit")
         self.formLayout_5.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.ftpIpAddressLineEdit)
         self.portLabel = QtWidgets.QLabel(self.ftpServerConfigGroupBox)
@@ -559,7 +618,7 @@ class Ui_HotlineMainWindow(object):
         HotlineMainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(HotlineMainWindow)
-        self.tabWidget.setCurrentIndex(1)
+        self.tabWidget.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(HotlineMainWindow)
         HotlineMainWindow.setTabOrder(self.newContactInboxPortSpinBox, self.newContactFtpPortSpinBox)
@@ -608,7 +667,14 @@ class Ui_HotlineMainWindow(object):
         self.searchContactCriteriaComboBox.setItemText(1, _translate("HotlineMainWindow", "MAC address"))
         self.newContactGroupBox.setTitle(_translate("HotlineMainWindow", "New contact"))
         self.nameLabel.setText(_translate("HotlineMainWindow", "Name:"))
-        self.macAddressLabel.setText(_translate("HotlineMainWindow", "MAC address:"))
+        self.newContactNameLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Muhammad"))
+        self.macAddressLabel.setText(_translate("HotlineMainWindow", "MAC:"))
+        self.newContactMacAddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "aaaa.bbbb.cccc"))
+        self.label.setText(_translate("HotlineMainWindow", "IPv4:"))
+        self.newContactIpv4AddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "192.168.1.89"))
+        self.label_2.setText(_translate("HotlineMainWindow", "IPv6:"))
+        self.newContactIpv6AddressLineEdit.setPlaceholderText(
+            _translate("HotlineMainWindow", "fe80::721c:e7ff:fe61:8a61%19"))
         self.inboxPortLabel.setText(_translate("HotlineMainWindow", "Inbox port:"))
         self.fTPPortLabel.setText(_translate("HotlineMainWindow", "FTP port:"))
         self.addNewContactPushButton.setText(_translate("HotlineMainWindow", "Add"))
@@ -619,6 +685,7 @@ class Ui_HotlineMainWindow(object):
         self.maxConnectionsLabel.setText(_translate("HotlineMainWindow", "Max connections:"))
         self.maxConnectionsPerIPLabel.setText(_translate("HotlineMainWindow", "Max connections per IP:"))
         self.folderLabel.setText(_translate("HotlineMainWindow", "Folder:"))
+        self.ftpFolderLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "C:\\Users\\muhammad\\"))
         self.groupBox_7.setTitle(_translate("HotlineMainWindow", "Banner"))
         self.ftpBannerPlainTextEdit.setPlaceholderText(
             _translate("HotlineMainWindow", "Type here a creative banner message :)"))
@@ -630,8 +697,10 @@ class Ui_HotlineMainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFTP), _translate("HotlineMainWindow", "FTP"))
         self.groupBox.setTitle(_translate("HotlineMainWindow", "Server information"))
         self.iPAddressLabel_2.setText(_translate("HotlineMainWindow", "IP address:"))
+        self.interIpAddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "172.16.128.5"))
         self.portLabel_2.setText(_translate("HotlineMainWindow", "Port:"))
         self.passwordLabel.setText(_translate("HotlineMainWindow", "Password:           "))
+        self.interPasswordLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "12345"))
         self.groupBox_2.setTitle(_translate("HotlineMainWindow", "My contact information"))
         self.nameLabel_2.setText(_translate("HotlineMainWindow", "Name:"))
         self.iPLabel.setText(_translate("HotlineMainWindow", "IP address:"))
@@ -676,17 +745,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
 
-        # Contacts table
-        contactsTableHeaders = ['Name', 'MAC Address', 'IPv4 Address', 'IPv6 Address',
-                                'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
-        self.contactsTableWidget.setColumnCount(len(contactsTableHeaders))
-        self.contactsTableWidget.setHorizontalHeaderLabels(contactsTableHeaders)
-        contactsTableHeader = self.contactsTableWidget.horizontalHeader()
-        for col in range(len(contactsTableHeaders)):
-            contactsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
+        # Functionality to buttons
+        self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
 
         self.loadFtpConfiguration()
         self.loadInterlocutorConfiguration()
+        self.setupContactsTable()
         self.loadContactsTable()
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
 
@@ -768,6 +832,15 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoNameLineEdit.setText(username)
         self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
 
+    def setupContactsTable(self):
+        contactsTableHeaders = ['Name', 'MAC Address', 'IPv4 Address', 'IPv6 Address',
+                                'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
+        self.contactsTableWidget.setColumnCount(len(contactsTableHeaders))
+        self.contactsTableWidget.setHorizontalHeaderLabels(contactsTableHeaders)
+        contactsTableHeader = self.contactsTableWidget.horizontalHeader()
+        for col in range(len(contactsTableHeaders)):
+            contactsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
+
     def loadContactsTable(self):
         conn = dbfunctions.get_connection()
         contacts = dbfunctions.contacts(conn)
@@ -805,6 +878,56 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             delete_btn.setText('Delete')
             delete_btn.clicked.connect(self.delete_contact_row)
             self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
+
+    @QtCore.pyqtSlot()
+    def addNewContactPushButtonAction(self):
+        mac_address = self.newContactMacAddressLineEdit.text().strip()
+        name = self.newContactNameLineEdit.text().strip()
+        ipv4_address = self.newContactIpv4AddressLineEdit.text().strip()
+        ipv6_address = self.newContactIpv6AddressLineEdit.text().strip()
+        inbox_port = self.newContactInboxPortSpinBox.value()
+        ftp_port = self.newContactFtpPortSpinBox.value()
+
+        try:
+            valid.is_name(name, exception=True)
+            valid.is_mac_address(mac_address, exception=True)
+            ipv4_address = ipv4_address if valid.is_ipv4_address(ipv4_address) else ''
+            ipv6_address = ipv4_address if valid.is_ipv6_address(ipv6_address) else ''
+        except Exception as e:
+            msg = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Information,
+                'Wrong value',
+                f'{e}',
+                QtWidgets.QMessageBox.Ok
+            )
+            answer = msg.exec_()
+        else:
+            try:
+                conn = dbfunctions.get_connection()
+                dbfunctions.insert_contact(conn, mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+            else:
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Information,
+                    'Success',
+                    'The contact was added successfully',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+                self.newContactMacAddressLineEdit.setText('')
+                self.newContactNameLineEdit.setText('')
+                self.newContactIpv4AddressLineEdit.setText('')
+                self.newContactIpv6AddressLineEdit.setText('')
+            finally:
+                conn.close()
 
     def ftpStartPushButtonAction(self):
         address = self.ftpIpAddressLineEdit.text()

@@ -131,6 +131,7 @@ async def receive_message(message, user_mac_address, received_timestamp, peer_ad
                 else:
                     dbfunctions.insert_contact(conn, message['sender'], name='Stranger')
 
+            # TODO: After adding or not the contact its a good idead to update its ip address in the database
             dbfunctions.insert_received_message(conn, received_timestamp, message['sender'], message['content'],
                                                 message['sent_timestamp'])
         except Exception as e:

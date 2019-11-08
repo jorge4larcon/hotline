@@ -7,7 +7,6 @@ import ui
 
 if __name__ == '__main__':
     configuration.configure_logging('DEBUG')
-    dbfunctions.set_dbpath("C:/Users/jorge/tangerine/estancia/hotline/resources/hotline.db")
     logging.info('Logging has been configured!')
     try:
         if configuration.running_as_a_python_process():
@@ -23,7 +22,10 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(e)
 
-    configuration.setup_network_information()
+    try:
+        configuration.setup_network_information()
+    except Exception as e:
+        logging.error('Could not configure the network information')
 
     app = PyQt5.QtWidgets.QApplication(sys.argv)
     window = ui.HotlineMainWindow()
