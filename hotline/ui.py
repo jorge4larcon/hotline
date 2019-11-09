@@ -748,42 +748,157 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         # Functionality to buttons
         self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
-        self.findContactPushButton.clicked.connect(self.insert_contact)
+        self.findContactPushButton.clicked.connect(self.findContactInTable)
 
         self.loadFtpConfiguration()
         self.loadInterlocutorConfiguration()
         self.setupContactsTable()
         self.loadContactsTable()
-        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
+        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     @QtCore.pyqtSlot(int, int)
-    def update_contact_from_table_item(self, row, cell):
+    def update_contact_from_table_cell(self, row, cell):
         mac_address = self.contactsTableWidget.item(row, 1).text()
         new_value = self.contactsTableWidget.item(row, cell).text()
-        if cell == 0:
-            field = 'name'
+        if cell == 0:  # name changed
+            conn = dbfunctions.get_connection()
+            try:
+                valid.is_name(new_value, exception=True)
+                dbfunctions.update_contact(conn, mac_address, name=new_value)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+                try:
+                    self.contactsTableWidget.item(row, cell).setText(dbfunctions.get_contact(conn, mac_address, 'name'))
+                except Exception as e:
+                    logging.error(e)
+                    msg = QtWidgets.QMessageBox(
+                        QtWidgets.QMessageBox.Critical,
+                        'Error',
+                        f'{e}',
+                        QtWidgets.QMessageBox.Ok
+                    )
+                    answer = msg.exec_()
+            else:
+                logging.info(f"New value '{new_value}' for field 'name' for user '{mac_address}'")
+            finally:
+                conn.close()
         elif cell == 2:
-            field = 'ipv4_address'
+            conn = dbfunctions.get_connection()
+            try:
+                valid.is_ipv4_address(new_value, exception=True)
+                dbfunctions.update_contact(conn, mac_address, ipv4_address=new_value)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+                try:
+                    self.contactsTableWidget.item(row, cell).setText(
+                        dbfunctions.get_contact(conn, mac_address, 'ipv4_address'))
+                except Exception as e:
+                    logging.error(e)
+                    msg = QtWidgets.QMessageBox(
+                        QtWidgets.QMessageBox.Critical,
+                        'Error',
+                        f'{e}',
+                        QtWidgets.QMessageBox.Ok
+                    )
+                    answer = msg.exec_()
+            else:
+                logging.info(f"New value '{new_value}' for field 'ipv4_address' for user '{mac_address}'")
+            finally:
+                conn.close()
         elif cell == 3:
-            field = 'ipv6_address'
+            conn = dbfunctions.get_connection()
+            try:
+                valid.is_ipv6_address(new_value, exception=True)
+                dbfunctions.update_contact(conn, mac_address, ipv6_address=new_value)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+                try:
+                    self.contactsTableWidget.item(row, cell).setText(
+                        dbfunctions.get_contact(conn, mac_address, 'ipv6_address'))
+                except Exception as e:
+                    logging.error(e)
+                    msg = QtWidgets.QMessageBox(
+                        QtWidgets.QMessageBox.Critical,
+                        'Error',
+                        f'{e}',
+                        QtWidgets.QMessageBox.Ok
+                    )
+                    answer = msg.exec_()
+            else:
+                logging.info(f"New value '{new_value}' for field 'ipv6_address' for user '{mac_address}'")
+            finally:
+                conn.close()
 
-        logging.info(f"New value '{new_value}' for field '{field}' for user '{mac_address}'")
-
-    @QtCore.pyqtSlot(int)
-    def update_contact_inbox_port(self, port):
+    # @QtCore.pyqtSlot(int)
+    # def update_contact_inbox_port(self, port):
+    @QtCore.pyqtSlot()
+    def update_contact_inbox_port(self):
         spin = self.sender()
         if spin:
+            port = spin.value()
             row = self.contactsTableWidget.indexAt(spin.pos()).row()
             mac_address = self.contactsTableWidget.item(row, 1).text()
             logging.info(f"New value '{port}' for field 'inbox_port' for user '{mac_address}'")
+            conn = dbfunctions.get_connection()
+            try:
+                dbfunctions.update_contact(conn, mac_address, inbox_port=port)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+            finally:
+                conn.close()
 
-    @QtCore.pyqtSlot(int)
-    def update_contact_ftp_port(self, port):
+    # @QtCore.pyqtSlot(int)
+    # def update_contact_ftp_port(self, port):
+    @QtCore.pyqtSlot()
+    def update_contact_ftp_port(self):
         spin = self.sender()
         if spin:
+            port = spin.value()
             row = self.contactsTableWidget.indexAt(spin.pos()).row()
             mac_address = self.contactsTableWidget.item(row, 1).text()
             logging.info(f"New value '{port}' for field 'ftp_port' for user '{mac_address}'")
+            conn = dbfunctions.get_connection()
+            try:
+                dbfunctions.update_contact(conn, mac_address, ftp_port=port)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+            finally:
+                conn.close()
 
     @QtCore.pyqtSlot()
     def delete_contact_row(self):
@@ -792,11 +907,34 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             row = self.contactsTableWidget.indexAt(btn.pos()).row()
             mac_address = self.contactsTableWidget.item(row, 1).text()
             logging.info(f"Deleting Contact '{mac_address}'...")
-            self.contactsTableWidget.removeRow(row)
+            conn = dbfunctions.get_connection()
+            try:
+                dbfunctions.delete_contact(conn, mac_address)
+            except Exception as e:
+                logging.error(e)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+            else:
+                self.contactsTableWidget.removeRow(row)
+            finally:
+                conn.close()
 
     @QtCore.pyqtSlot()
-    def insert_contact(self):
-        self.contactsTableWidget.insertRow(0)
+    def findContactInTable(self):
+        search_criteria = self.searchContactCriteriaComboBox.currentText()
+        pattern = self.searchContactLineEdit.text()
+        if search_criteria == 'Name':
+            self.contactsTableWidget.findItems(pattern, QtCore.Qt.MatchCaseSensitive | QtCore.Qt.MatchContains)
+            
+            # for row in range(self.contactsTableWidget.rowCount()):
+
+        elif search_criteria == 'MAC address':
+            pass
 
     def loadFtpConfiguration(self):
         conn = dbfunctions.get_connection()
@@ -839,7 +977,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
 
     def setupContactsTable(self):
-        contactsTableHeaders = ['Name', 'MAC Address', 'IPv4 Address', 'IPv6 Address',
+        contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
                                 'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
         self.contactsTableWidget.setColumnCount(len(contactsTableHeaders))
         self.contactsTableWidget.setHorizontalHeaderLabels(contactsTableHeaders)
@@ -870,14 +1008,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             inbox_port_spin.setMaximum(65535)
             inbox_port_spin.setMinimum(0)
             inbox_port_spin.setValue(contact['inbox_port'])
-            inbox_port_spin.valueChanged.connect(self.update_contact_inbox_port)
+            inbox_port_spin.editingFinished.connect(self.update_contact_inbox_port)
             self.contactsTableWidget.setCellWidget(row, 4, inbox_port_spin)
 
             ftp_port_spin = QtWidgets.QSpinBox(self.contactsTableWidget)
             ftp_port_spin.setMaximum(65535)
             ftp_port_spin.setMinimum(0)
             ftp_port_spin.setValue(contact['ftp_port'])
-            ftp_port_spin.valueChanged.connect(self.update_contact_ftp_port)
+            ftp_port_spin.editingFinished.connect(self.update_contact_ftp_port)
             self.contactsTableWidget.setCellWidget(row, 5, ftp_port_spin)
 
             chat_btn = QtWidgets.QPushButton(self.contactsTableWidget)
@@ -891,12 +1029,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             delete_btn.clicked.connect(self.delete_contact_row)
             self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
 
-        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
+        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     def addContactToContactsTable(self, name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port):
         for row in range(self.contactsTableWidget.rowCount()):
             row_name = self.contactsTableWidget.item(row, 0).text()
-            logging.debug(f'row_name = {row_name}')
             if name < row_name:
                 break
         else:
@@ -938,7 +1075,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         delete_btn.setText('Delete')
         delete_btn.clicked.connect(self.delete_contact_row)
         self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
-        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
+        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     @QtCore.pyqtSlot()
     def addNewContactPushButtonAction(self):
