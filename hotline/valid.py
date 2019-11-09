@@ -36,7 +36,7 @@ def is_ipv4_address(ipv4_address: str, exception=False) -> bool:
 def is_ipv6_address(ipv6_address: str, exception=False) -> bool:
     try:
         if '%' in ipv6_address:
-            ipaddress.IPv6Address(ipv6_address[:ipv6_address.index('%')])
+            ipv6_address = ipv6_address.split('%')[0]
 
         ipaddress.IPv6Address(ipv6_address)
     except ipaddress.AddressValueError:

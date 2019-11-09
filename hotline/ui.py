@@ -21,6 +21,7 @@ import logging
 import os
 import dbfunctions
 import valid
+import sqlite3
 
 
 class Ui_HotlineMainWindow(object):
@@ -747,6 +748,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         # Functionality to buttons
         self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
+        self.findContactPushButton.clicked.connect(self.insert_contact)
 
         self.loadFtpConfiguration()
         self.loadInterlocutorConfiguration()
@@ -791,6 +793,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             mac_address = self.contactsTableWidget.item(row, 1).text()
             logging.info(f"Deleting Contact '{mac_address}'...")
             self.contactsTableWidget.removeRow(row)
+
+    @QtCore.pyqtSlot()
+    def insert_contact(self):
+        self.contactsTableWidget.insertRow(0)
 
     def loadFtpConfiguration(self):
         conn = dbfunctions.get_connection()
@@ -846,6 +852,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         contacts = dbfunctions.contacts(conn)
         conn.close()
         self.contactsTableWidget.setRowCount(len(contacts))
+
+        try:
+            self.contactsTableWidget.cellChanged.disconnect()
+        except:
+            pass
+
         for row, contact in enumerate(contacts):
             self.contactsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(str(contact['name'])))
             mac_address = QtWidgets.QTableWidgetItem(str(contact['mac_address']))
@@ -879,6 +891,55 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             delete_btn.clicked.connect(self.delete_contact_row)
             self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
 
+        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
+
+    def addContactToContactsTable(self, name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port):
+        for row in range(self.contactsTableWidget.rowCount()):
+            row_name = self.contactsTableWidget.item(row, 0).text()
+            logging.debug(f'row_name = {row_name}')
+            if name < row_name:
+                break
+        else:
+            row += 1
+
+        try:
+            self.contactsTableWidget.cellChanged.disconnect()
+        except:
+            pass
+        self.contactsTableWidget.insertRow(row)
+        self.contactsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(name))
+        mac_address = QtWidgets.QTableWidgetItem(mac_address)
+        mac_address.setFlags(mac_address.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.contactsTableWidget.setItem(row, 1, mac_address)
+        self.contactsTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(ipv4_address))
+        self.contactsTableWidget.setItem(row, 3, QtWidgets.QTableWidgetItem(ipv6_address))
+
+        inbox_port_spin = QtWidgets.QSpinBox(self.contactsTableWidget)
+        inbox_port_spin.setMaximum(65535)
+        inbox_port_spin.setMinimum(0)
+        inbox_port_spin.setValue(inbox_port)
+        inbox_port_spin.valueChanged.connect(self.update_contact_inbox_port)
+        self.contactsTableWidget.setCellWidget(row, 4, inbox_port_spin)
+
+        ftp_port_spin = QtWidgets.QSpinBox(self.contactsTableWidget)
+        ftp_port_spin.setMaximum(65535)
+        ftp_port_spin.setMinimum(0)
+        ftp_port_spin.setValue(ftp_port)
+        ftp_port_spin.valueChanged.connect(self.update_contact_ftp_port)
+        self.contactsTableWidget.setCellWidget(row, 5, ftp_port_spin)
+
+        chat_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+        chat_btn.setText('Chat')
+        self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
+        files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+        files_btn.setText('Files')
+        self.contactsTableWidget.setCellWidget(row, 7, files_btn)
+        delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+        delete_btn.setText('Delete')
+        delete_btn.clicked.connect(self.delete_contact_row)
+        self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
+        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_item)
+
     @QtCore.pyqtSlot()
     def addNewContactPushButtonAction(self):
         mac_address = self.newContactMacAddressLineEdit.text().strip()
@@ -887,15 +948,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         ipv6_address = self.newContactIpv6AddressLineEdit.text().strip()
         inbox_port = self.newContactInboxPortSpinBox.value()
         ftp_port = self.newContactFtpPortSpinBox.value()
-
         try:
             valid.is_name(name, exception=True)
             valid.is_mac_address(mac_address, exception=True)
             ipv4_address = ipv4_address if valid.is_ipv4_address(ipv4_address) else ''
-            ipv6_address = ipv4_address if valid.is_ipv6_address(ipv6_address) else ''
+            ipv6_address = ipv6_address if valid.is_ipv6_address(ipv6_address) else ''
         except Exception as e:
             msg = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Information,
+                QtWidgets.QMessageBox.Critical,
                 'Wrong value',
                 f'{e}',
                 QtWidgets.QMessageBox.Ok
@@ -905,12 +965,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             try:
                 conn = dbfunctions.get_connection()
                 dbfunctions.insert_contact(conn, mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port)
-            except Exception as e:
-                logging.error(e)
+            except sqlite3.IntegrityError as e:
+                logging.error(f'{e}')
                 msg = QtWidgets.QMessageBox(
                     QtWidgets.QMessageBox.Critical,
                     'Error',
-                    f'{e}',
+                    f"A contact with the MAC address '{mac_address}' is already registered",
                     QtWidgets.QMessageBox.Ok
                 )
                 answer = msg.exec_()
@@ -926,6 +986,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 self.newContactNameLineEdit.setText('')
                 self.newContactIpv4AddressLineEdit.setText('')
                 self.newContactIpv6AddressLineEdit.setText('')
+                logging.info(
+                    f'nam={name} mac_address={mac_address} ipv4={ipv4_address} ipv6={ipv6_address} inbox={inbox_port} ftp={ftp_port}')
+                self.addContactToContactsTable(name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port)
             finally:
                 conn.close()
 
