@@ -790,6 +790,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         QtWidgets.QMessageBox.Ok
                     )
                     answer = msg.exec_()
+                    return
             else:
                 logging.info(f"New value '{new_value}' for field 'name' for user '{mac_address}'")
             finally:
@@ -797,7 +798,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         elif cell == 2:
             conn = dbfunctions.get_connection()
             try:
-                valid.is_ipv4_address(new_value, exception=True)
+                if not new_value == '':
+                    valid.is_ipv4_address(new_value, exception=True)
                 dbfunctions.update_contact(conn, mac_address, ipv4_address=new_value)
             except Exception as e:
                 logging.error(e)
@@ -820,6 +822,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         QtWidgets.QMessageBox.Ok
                     )
                     answer = msg.exec_()
+                    return
             else:
                 logging.info(f"New value '{new_value}' for field 'ipv4_address' for user '{mac_address}'")
             finally:
@@ -827,7 +830,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         elif cell == 3:
             conn = dbfunctions.get_connection()
             try:
-                valid.is_ipv6_address(new_value, exception=True)
+                if not new_value == '':
+                    valid.is_ipv6_address(new_value, exception=True)
                 dbfunctions.update_contact(conn, mac_address, ipv6_address=new_value)
             except Exception as e:
                 logging.error(e)
@@ -850,6 +854,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         QtWidgets.QMessageBox.Ok
                     )
                     answer = msg.exec_()
+                    return
             else:
                 logging.info(f"New value '{new_value}' for field 'ipv6_address' for user '{mac_address}'")
             finally:
@@ -944,6 +949,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot()
     def findContactInTable(self):
+        self.contactsTableWidget.clearSelection()
         newFindContactSearchPattern = self.searchContactLineEdit.text()
         if not newFindContactSearchPattern:
             self.lastMatchingRow = 0
@@ -973,6 +979,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 return
 
         print('scrolling to row:', row_to_scroll)
+        col = 0 if self.searchCriteria == 'Name' else 1
+        item_to_scroll = self.contactsTableWidget.item(row_to_scroll, col)
+        self.contactsTableWidget.scrollToItem(item_to_scroll, QtWidgets.QAbstractItemView.PositionAtTop)
+        self.contactsTableWidget.selectRow(row_to_scroll)
+
         self.lastMatchingRow = row_to_scroll + 1
         print('last matching row:', self.lastMatchingRow)
 
