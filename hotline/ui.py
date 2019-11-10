@@ -761,6 +761,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.loadContactsTable()
 
         self.setupConversationsTable()
+        self.loadConversationsTable()
 
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
@@ -1041,17 +1042,26 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
 
     def setupConversationsTable(self):
-        conversationsTableHeaders = ['Name', 'MAC', 'Last message']
+        conversationsTableHeaders = ['Name', 'MAC']
         self.conversationsTableWidget.setColumnCount(len(conversationsTableHeaders))
-        self.conversationsTableWidget.setHorizontalHeaderLabels(conversationsTableHeaders)
+        # self.conversationsTableWidget.setHorizontalHeaderLabels(conversationsTableHeaders)
         conversationsTableHeader = self.conversationsTableWidget.horizontalHeader()
-        conversationsTableHeader.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
-        conversationsTableHeader.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
-        conversationsTableHeader.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
+        for col in range(len(conversationsTableHeader)):
+            conversationsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
 
     def loadConversationsTable(self):
         conn = dbfunctions.get_connection()
-
+        last_messages = dbfunctions.last_sent_received_messages(conn)
+        conn.close()
+        self.conversationsTableWidget.setRowCount(len(last_messages))
+        try:
+            self.conversationsTableWidget.cellChanged.disconnect()
+        except:
+            pass
+        for row, message in enumerate(last_messages):
+            self.conversationsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(message['name']))
+            self.conversationsTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(message['mac_address']))
+            # self.conversationsTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(message['content']))
 
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
@@ -1110,12 +1120,16 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     def addContactToContactsTable(self, name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port):
-        for row in range(self.contactsTableWidget.rowCount()):
-            row_name = self.contactsTableWidget.item(row, 0).text()
-            if name < row_name:
-                break
-        else:
-            row += 1
+        # if self.contactsTableWidget.rowCount() > 0:
+        #     for row in range(self.contactsTableWidget.rowCount()):
+        #         row_name = self.contactsTableWidget.item(row, 0).text()
+        #         if name < row_name:
+        #             break
+        #     else:
+        #         row += 1
+        # else:
+        #     row = 0
+        row = self.contactsTableWidget.rowCount()
 
         try:
             self.contactsTableWidget.cellChanged.disconnect()

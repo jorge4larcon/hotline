@@ -1,6 +1,8 @@
 import sqlite3
 import os
 import datetime
+import operator
+import logging
 
 DB_PATH = None
 
@@ -166,7 +168,7 @@ def contacts(conn: sqlite3.Connection, mac_address=None):
 
 
 def last_sent_messages(conn: sqlite3.Connection, limit=10):
-    statement = 'SELECT sent_timestamp, receiver_contact, content, received_timestamp  FROM SentMessage ORDER BY sent_timestamp DESC LIMIT ?'
+    statement = 'SELECT DISTINCT MAX(sent_timestamp), receiver_contact, name FROM SentMessage, Contact WHERE receiver_contact = mac_address GROUP BY receiver_contact ORDER BY sent_timestamp DESC LIMIT ?;'
     with conn:
         return conn.execute(statement, (limit,)).fetchall()
 
@@ -219,7 +221,8 @@ def insert_received_message(conn: sqlite3.Connection, received_timestamp, sender
 
 
 def last_received_messages(conn: sqlite3.Connection, limit=10):
-    statement = 'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC LIMIT ?'
+    # Use of distinc, max and group by to get the last n messages
+    statement = 'SELECT DISTINCT MAX(received_timestamp), sender_contact, name FROM ReceivedMessage, Contact WHERE sender_contact = mac_address GROUP BY sender_contact ORDER BY received_timestamp DESC LIMIT ?'
     with conn:
         return conn.execute(statement, (limit,)).fetchall()
 
@@ -261,23 +264,41 @@ def received_messages(conn: sqlite3.Connection):
 def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
     last_sent = last_sent_messages(conn, limit)
     last_received = last_received_messages(conn, limit)
-    for sent in last_sent:
-        sent['sent_timestamp'] = datetime.datetime.fromisoformat(sent['sent_timestamp'])
-        try:
-            received_timestamp = sent['received_timestamp']
-            sent['received_timestamp'] = datetime.datetime.fromisoformat(received_timestamp)
-        except:
-            sent['received_timestamp'] = received_timestamp
+    last_messenguers = []
 
     for received in last_received:
-        received['received_timestamp'] = datetime.datetime.fromisoformat(received['received_timestamp'])
-        try:
-            sent_timestamp = sent['sent_timestamp']
-            sent['sent_timestamp'] = datetime.datetime.fromisoformat(sent_timestamp)
-        except:
-            sent['sent_timestamp'] = sent_timestamp
+        contact = {
+            'mac_address': received['sender_contact'],
+            'timestamp': datetime.datetime.fromisoformat(received['MAX(received_timestamp)']),
+            'name': received['name'],
+            'type': 'received'
+        }
+        last_messenguers.append(contact)
 
-    
+    for sent in last_sent:
+        contact = {
+            'mac_address': sent['receiver_contact'],
+            'timestamp': datetime.datetime.fromisoformat(sent['MAX(sent_timestamp)']),
+            'name': sent['name'],
+            'type': 'sent'
+        }
+        exist = False
+        for messenguer in last_messenguers:
+            if messenguer['mac_address'] == contact['mac_address']:
+                print(f"The contact '{messenguer['mac_address']}' exists")
+                exist = True
+                messenger_timestamp = messenguer['timestamp']
+                if contact['timestamp'] > messenger_timestamp:
+                    print(f"Updating timestamp")
+                    print(f"Old timestamp: {messenguer['timestamp'].isoformat()}")
+                    messenguer['timestamp'] = contact['timestamp']
+                    print(f"New timestamp: {messenguer['timestamp'].isoformat()}")
+
+        if not exist:
+            last_messenguers.append(contact)
+
+    last_messenguers = sorted(last_messenguers, key=operator.itemgetter('timestamp'), reverse=True)
+    return last_messenguers
 
 
 def get_connection():
@@ -304,6 +325,6 @@ if __name__ == '__main__':
 
     set_dbpath(debug_database_path())
     conn = get_connection()
-    messages = last_sent_messages(conn, 1)
-    for m in messages:
-        print(dict(m))
+    last_messages = last_sent_received_messages(conn)
+    for m in last_messages:
+        print(m)
