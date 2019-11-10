@@ -734,6 +734,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
 
+        # Some globals
+        self.searchCriteria = 'Name'
+        self.findContactSearchPattern = ''
+        self.lastMatchingRow = None
+
         # When user changes between tabs, keep the information ordered
         self.tabWidget.currentChanged.connect(self.onTabChange)
 
@@ -924,17 +929,52 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             finally:
                 conn.close()
 
-    @QtCore.pyqtSlot()
-    def findContactInTable(self):
-        search_criteria = self.searchContactCriteriaComboBox.currentText()
-        pattern = self.searchContactLineEdit.text()
+    def nextMatchingRow(self, search_criteria, pattern: str, lastMatchingRow):
         if search_criteria == 'Name':
-            self.contactsTableWidget.findItems(pattern, QtCore.Qt.MatchCaseSensitive | QtCore.Qt.MatchContains)
-            
-            # for row in range(self.contactsTableWidget.rowCount()):
+            for row in range(lastMatchingRow, self.contactsTableWidget.rowCount()):
+                name = self.contactsTableWidget.item(row, 0).text()
+                if pattern.lower() in name.lower():
+                    return row
 
         elif search_criteria == 'MAC address':
-            pass
+            for row in range(lastMatchingRow, self.contactsTableWidget.rowCount()):
+                mac = self.contactsTableWidget.item(row, 1).text()
+                if pattern.lower() in mac.lower():
+                    return row
+
+    @QtCore.pyqtSlot()
+    def findContactInTable(self):
+        newFindContactSearchPattern = self.searchContactLineEdit.text()
+        if not newFindContactSearchPattern:
+            self.lastMatchingRow = 0
+            print('No search pattern specified, restarting last matching row to 0 and exiting')
+            return
+
+        newSearchCriteria = self.searchContactCriteriaComboBox.currentText()
+        if self.searchCriteria != newSearchCriteria:
+            self.searchCriteria = newSearchCriteria
+            print('New search criteria = ', self.searchCriteria, 'setting the lastMatchingRow to 0')
+            self.lastMatchingRow = 0
+        else:  # Restart scrolling
+            print('The search criteria is the same, verifying the lastMatchingRow')
+            if newFindContactSearchPattern != self.findContactSearchPattern:
+                self.findContactSearchPattern = newFindContactSearchPattern
+                print('New search pattern = ', self.findContactSearchPattern, 'setting the lasMatchingRow to 0')
+                self.lastMatchingRow = 0
+            else:
+                print('The search pattern is the same')
+
+        row_to_scroll = self.nextMatchingRow(self.searchCriteria, self.findContactSearchPattern, self.lastMatchingRow)
+        if row_to_scroll == None:
+            self.lastMatchingRow = 0
+            row_to_scroll = self.nextMatchingRow(self.searchCriteria, self.findContactSearchPattern, self.lastMatchingRow)
+            if row_to_scroll == None:
+                print(f"None of the values of the '{self.searchCriteria}' matches with '{self.findContactSearchPattern}'")
+                return
+
+        print('scrolling to row:', row_to_scroll)
+        self.lastMatchingRow = row_to_scroll + 1
+        print('last matching row:', self.lastMatchingRow)
 
     def loadFtpConfiguration(self):
         conn = dbfunctions.get_connection()
