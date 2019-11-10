@@ -759,6 +759,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.loadInterlocutorConfiguration()
         self.setupContactsTable()
         self.loadContactsTable()
+
+        self.setupConversationsTable()
+
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     @QtCore.pyqtSlot(int, int)
@@ -911,6 +914,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 conn.close()
 
     @QtCore.pyqtSlot()
+    def start_chat_contact_row(self):
+        btn = self.sender()
+        if btn:
+            row = self.contactsTableWidget.indexAt(btn.pos()).row()
+            mac_address = self.contactsTableWidget.item(row, 1).text()
+            logging.info(f"Starting chat with '{mac_address}'")
+
+    @QtCore.pyqtSlot()
     def delete_contact_row(self):
         btn = self.sender()
         if btn:
@@ -973,9 +984,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         row_to_scroll = self.nextMatchingRow(self.searchCriteria, self.findContactSearchPattern, self.lastMatchingRow)
         if row_to_scroll == None:
             self.lastMatchingRow = 0
-            row_to_scroll = self.nextMatchingRow(self.searchCriteria, self.findContactSearchPattern, self.lastMatchingRow)
+            row_to_scroll = self.nextMatchingRow(self.searchCriteria, self.findContactSearchPattern,
+                                                 self.lastMatchingRow)
             if row_to_scroll == None:
-                print(f"None of the values of the '{self.searchCriteria}' matches with '{self.findContactSearchPattern}'")
+                print(
+                    f"None of the values of the '{self.searchCriteria}' matches with '{self.findContactSearchPattern}'")
                 return
 
         print('scrolling to row:', row_to_scroll)
@@ -1027,6 +1040,19 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoNameLineEdit.setText(username)
         self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
 
+    def setupConversationsTable(self):
+        conversationsTableHeaders = ['Name', 'MAC', 'Last message']
+        self.conversationsTableWidget.setColumnCount(len(conversationsTableHeaders))
+        self.conversationsTableWidget.setHorizontalHeaderLabels(conversationsTableHeaders)
+        conversationsTableHeader = self.conversationsTableWidget.horizontalHeader()
+        conversationsTableHeader.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
+        conversationsTableHeader.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
+        conversationsTableHeader.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents | QtWidgets.QHeaderView.Interactive)
+
+    def loadConversationsTable(self):
+        conn = dbfunctions.get_connection()
+
+
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
                                 'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
@@ -1071,6 +1097,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
             chat_btn = QtWidgets.QPushButton(self.contactsTableWidget)
             chat_btn.setText('Chat')
+            chat_btn.clicked.connect(self.start_chat_contact_row)
             self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
             files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
             files_btn.setText('Files')
@@ -1118,6 +1145,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         chat_btn = QtWidgets.QPushButton(self.contactsTableWidget)
         chat_btn.setText('Chat')
+        chat_btn.clicked.connect(self.start_chat_contact_row)
         self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
         files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
         files_btn.setText('Files')
@@ -1126,6 +1154,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         delete_btn.setText('Delete')
         delete_btn.clicked.connect(self.delete_contact_row)
         self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
+
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     @QtCore.pyqtSlot()

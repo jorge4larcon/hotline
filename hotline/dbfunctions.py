@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 
 DB_PATH = None
 
@@ -164,6 +165,12 @@ def contacts(conn: sqlite3.Connection, mac_address=None):
             'SELECT mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port FROM Contact ORDER BY name ASC').fetchall()
 
 
+def last_sent_messages(conn: sqlite3.Connection, limit=10):
+    statement = 'SELECT sent_timestamp, receiver_contact, content, received_timestamp  FROM SentMessage ORDER BY sent_timestamp DESC LIMIT ?'
+    with conn:
+        return conn.execute(statement, (limit,)).fetchall()
+
+
 def insert_sent_message(conn: sqlite3.Connection, sent_timestamp, receiver_contact, content, received_timestamp):
     statement = 'INSERT INTO SentMessage(sent_timestamp, receiver_contact, content, received_timestamp) ' \
                 'VALUES (?, ?, ?, ?)'
@@ -211,6 +218,12 @@ def insert_received_message(conn: sqlite3.Connection, received_timestamp, sender
         conn.execute(statement, (received_timestamp, sender_contact, content, sent_timestamp))
 
 
+def last_received_messages(conn: sqlite3.Connection, limit=10):
+    statement = 'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC LIMIT ?'
+    with conn:
+        return conn.execute(statement, (limit,)).fetchall()
+
+
 def update_received_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
     fields = [*filter(lambda f: f in RECEIVED_MESSAGE_FIELDS and RECEIVED_MESSAGE_FIELDS[f]['editable'], kwargs)]
     if fields:
@@ -245,6 +258,28 @@ def received_messages(conn: sqlite3.Connection):
             'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC').fetchall()
 
 
+def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
+    last_sent = last_sent_messages(conn, limit)
+    last_received = last_received_messages(conn, limit)
+    for sent in last_sent:
+        sent['sent_timestamp'] = datetime.datetime.fromisoformat(sent['sent_timestamp'])
+        try:
+            received_timestamp = sent['received_timestamp']
+            sent['received_timestamp'] = datetime.datetime.fromisoformat(received_timestamp)
+        except:
+            sent['received_timestamp'] = received_timestamp
+
+    for received in last_received:
+        received['received_timestamp'] = datetime.datetime.fromisoformat(received['received_timestamp'])
+        try:
+            sent_timestamp = sent['sent_timestamp']
+            sent['sent_timestamp'] = datetime.datetime.fromisoformat(sent_timestamp)
+        except:
+            sent['sent_timestamp'] = sent_timestamp
+
+    
+
+
 def get_connection():
     if DB_PATH:
         conn = sqlite3.connect(DB_PATH)
@@ -261,3 +296,14 @@ def set_dbpath(path):
         DB_PATH = path
     else:
         raise FileNotFoundError(f"No such file: '{path}')")
+
+
+if __name__ == '__main__':
+    from configuration import debug_database_path
+    from pprint import pprint
+
+    set_dbpath(debug_database_path())
+    conn = get_connection()
+    messages = last_sent_messages(conn, 1)
+    for m in messages:
+        print(dict(m))
