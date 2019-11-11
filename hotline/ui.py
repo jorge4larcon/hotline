@@ -1079,6 +1079,62 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.ftpBannerPlainTextEdit.setPlainText(banner)
         self.ftpPortSpinBox.setValue(port)
 
+        self.ftpMaxConnectionsSpinBox.editingFinished.connect(self.save_ftp_max_connections_configuration)
+        self.ftpMaxConnectionsPerIPSpinBox.editingFinished.connect(self.save_ftp_max_connections_per_ip_configuration)
+        self.ftpPortSpinBox.editingFinished.connect(self.save_ftp_port_configuration)
+        self.ftpFolderLineEdit.editingFinished.connect(self.save_ftp_folder_configuration)
+
+    @QtCore.pyqtSlot()
+    def save_ftp_folder_configuration(self):
+        new_folder = self.ftpFolderLineEdit.text()
+        if new_folder == '':
+            conn = dbfunctions.get_connection()
+            dbfunctions.update_configuration(conn, ftp_folder=new_folder)
+            conn.close()
+            logging.info(f"New value '{new_folder}' for field 'ftp_folder'")
+        else:
+            if os.path.isdir(new_folder):
+                conn = dbfunctions.get_connection()
+                dbfunctions.update_configuration(conn, ftp_folder=new_folder)
+                conn.close()
+                logging.info(f"New value '{new_folder}' for field 'ftp_folder'")
+            else:
+                conn = dbfunctions.get_connection()
+                old_folder = dbfunctions.get_configuration(conn, 'ftp_folder')
+                conn.close()
+                self.ftpFolderLineEdit.setText(old_folder)
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f"'{new_folder}' is not a folder or doesn't exist",
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+
+    @QtCore.pyqtSlot()
+    def save_ftp_max_connections_per_ip_configuration(self):
+        new_value = self.ftpMaxConnectionsPerIPSpinBox.value()
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, ftp_max_connections_per_ip=new_value)
+        conn.close()
+        logging.info(f"New value '{new_value}' for field 'ftp_max_connections_per_ip'")
+
+    @QtCore.pyqtSlot()
+    def save_ftp_max_connections_configuration(self):
+        new_value = self.ftpMaxConnectionsSpinBox.value()
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, ftp_max_connections=new_value)
+        conn.close()
+        logging.info(f"New value '{new_value}' for field 'ftp_max_connections'")
+
+    @QtCore.pyqtSlot()
+    def save_ftp_port_configuration(self):
+        new_port = self.ftpPortSpinBox.value()
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, ftp_port=new_port)
+        conn.close()
+        logging.info(f"New value '{new_port}' for field 'ftp_port'")
+
     def loadInterlocutorConfiguration(self):
         conn = dbfunctions.get_connection()
         inter_address, inter_port, inter_pass, ipv4, username, inbox_port, mac_address, get_only_by_mac = dbfunctions.get_configuration(
@@ -1107,7 +1163,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         self.myContactInfoNameLineEdit.editingFinished.connect(self.save_my_contact_info_name_configuration)
         self.myContactInfoInboxPortSpinBox.editingFinished.connect(self.save_my_contact_info_inbox_port_configuration)
-        self.myContactInfoGetOnlyByMacCheckBox.stateChanged.connect(self.save_my_contact_info_get_only_by_mac_configuration)
+        self.myContactInfoGetOnlyByMacCheckBox.stateChanged.connect(
+            self.save_my_contact_info_get_only_by_mac_configuration)
 
     @QtCore.pyqtSlot(int)
     def save_my_contact_info_get_only_by_mac_configuration(self, new_state):
