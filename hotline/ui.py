@@ -756,7 +756,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
 
-        # Some globals
         self.searchCriteria = 'Name'
         self.findContactSearchPattern = ''
         self.lastMatchingRow = None
@@ -764,30 +763,33 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         # When user changes between tabs, keep the information ordered
         self.tabWidget.currentChanged.connect(self.onTabChange)
 
-        # FTP tab
-        self.ftpIpAddressLineEdit.setReadOnly(True)
-        self.ftpShutdownPushButton.setEnabled(False)
-        self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
+        self.setupFtpTab()
+        self.setupInterlocutorTab()
+        self.setupContactsTab()
+        self.setupChatsTab()
 
-        # Interlocutor client tab
-        self.myContactInfoIpAddressLineEdit.setReadOnly(True)
-        self.myContactInfoMacAddressLineEdit.setReadOnly(True)
-
-        # Functionality to buttons
-        self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
-        self.findContactPushButton.clicked.connect(self.findContactInTable)
-
-        self.loadFtpConfiguration()
-        self.loadInterlocutorConfiguration()
-
-        self.setupContactsTable()
-        self.loadContactsTable()
-
+    def setupChatsTab(self):
         self.setupConversationsTable()
         self.loadConversationsTable()
 
-        # self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
-        # self.conversationsTableWidget.cellClicked.connect(self.open_conversation_from_table_cell)
+    def setupContactsTab(self):
+        self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
+        self.findContactPushButton.clicked.connect(self.findContactInTable)
+        self.setupContactsTable()
+        self.loadContactsTable()
+
+    def setupFtpTab(self):
+        self.ftpIpAddressLineEdit.setReadOnly(True)
+        self.ftpShutdownPushButton.setEnabled(False)
+        self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
+        self.loadFtpConfiguration()
+        self.setupFtpFilesTable()
+        # self.loadFtpFilesTable()
+
+    def setupInterlocutorTab(self):
+        self.myContactInfoIpAddressLineEdit.setReadOnly(True)
+        self.myContactInfoMacAddressLineEdit.setReadOnly(True)
+        self.loadInterlocutorConfiguration()
 
     @QtCore.pyqtSlot(int, int)
     def open_conversation_from_table_cell(self, row, col):
@@ -1092,12 +1094,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             dbfunctions.update_configuration(conn, ftp_folder=new_folder)
             conn.close()
             logging.info(f"New value '{new_folder}' for field 'ftp_folder'")
+            self.loadFtpFilesTable()
         else:
             if os.path.isdir(new_folder):
                 conn = dbfunctions.get_connection()
                 dbfunctions.update_configuration(conn, ftp_folder=new_folder)
                 conn.close()
                 logging.info(f"New value '{new_folder}' for field 'ftp_folder'")
+                self.loadFtpFilesTable()
             else:
                 conn = dbfunctions.get_connection()
                 old_folder = dbfunctions.get_configuration(conn, 'ftp_folder')
@@ -1334,6 +1338,38 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.conversationsTableWidget.clearSelection()
         # self.conversationsTableWidget.selectRow(0)
         self.conversationsTableWidget.item(0, 0).setSelected(True)
+
+    def setupFtpFilesTable(self):
+        tableHeaders = ['Name', 'Type', 'Size']
+        self.ftpFilesTableWidget.setColumnCount(len(tableHeaders))
+        self.ftpFilesTableWidget.setHorizontalHeaderLabels(tableHeaders)
+        ftpFilesHeader = self.ftpFilesTableWidget.horizontalHeader()
+        ftpFilesHeader.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        ftpFilesHeader.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        ftpFilesHeader.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+
+    def loadFtpFilesTable(self):
+        path = self.ftpFolderLineEdit.text()
+        if path == '':
+            while self.ftpFilesTableWidget.rowCount():
+                self.ftpFilesTableWidget.removeRow(0)
+            return
+        else:
+            logging.info(f"Listing files in '{path}'")
+            files = os.listdir(path)
+            self.ftpFilesTableWidget.setRowCount(len(files))
+
+            for row, file in enumerate(files):
+                if os.path.isdir(os.path.join(path, file)):
+                    self.ftpFilesTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(file))
+                    self.ftpFilesTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem('Directory'))
+                    self.ftpFilesTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem('Unknown'))
+                else:
+                    filename, extension = os.path.splitext(file)
+                    size = os.path.getsize(os.path.join(path, file))
+                    self.ftpFilesTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(filename))
+                    self.ftpFilesTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(extension))
+                    self.ftpFilesTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(f'{size} bytes'))
 
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
