@@ -1066,9 +1066,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     def loadFtpConfiguration(self):
         conn = dbfunctions.get_connection()
-        ipv4, ipv6, max_conn, max_conn_per_ip, folder, banner, port = dbfunctions.get_configuration(
+        ipv4, ipv6, max_conn, max_conn_per_ip, folder, banner, port, usr_can_upload = dbfunctions.get_configuration(
             conn, 'ipv4_address', 'ipv6_address', 'ftp_max_connections', 'ftp_max_connections_per_ip', 'ftp_folder',
-            'ftp_banner', 'ftp_port')
+            'ftp_banner', 'ftp_port', 'ftp_users_can_upload_files')
         conn.close()
         ip = ipv4 if ipv4 else (ipv6 if ipv6 else 'Could not obtain your IP address')
         max_conn = max_conn if max_conn else 10
@@ -1076,17 +1076,27 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         folder = folder if folder and os.path.isdir(folder) else ''
         banner = banner if banner is not None else ''
         port = port if port is not None else 21
+        users_can_upload_files = bool(usr_can_upload)
         self.ftpIpAddressLineEdit.setText(ip)
         self.ftpMaxConnectionsSpinBox.setValue(max_conn)
         self.ftpMaxConnectionsPerIPSpinBox.setValue(max_conn_per_ip)
         self.ftpFolderLineEdit.setText(folder)
         self.ftpBannerPlainTextEdit.setPlainText(banner)
         self.ftpPortSpinBox.setValue(port)
+        self.ftpUsersCanUploadFilesCheckBox.setChecked(users_can_upload_files)
 
         self.ftpMaxConnectionsSpinBox.editingFinished.connect(self.save_ftp_max_connections_configuration)
         self.ftpMaxConnectionsPerIPSpinBox.editingFinished.connect(self.save_ftp_max_connections_per_ip_configuration)
         self.ftpPortSpinBox.editingFinished.connect(self.save_ftp_port_configuration)
         self.ftpFolderLineEdit.editingFinished.connect(self.save_ftp_folder_configuration)
+        self.ftpUsersCanUploadFilesCheckBox.stateChanged.connect(self.save_ftp_users_can_upload_files_configuration)
+
+    @QtCore.pyqtSlot(int)
+    def save_ftp_users_can_upload_files_configuration(self, new_state):
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, ftp_users_can_upload_files=new_state)
+        conn.close()
+        logging.info(f"New value '{new_state}' for field 'ftp_users_can_upload_files'")
 
     @QtCore.pyqtSlot()
     def save_ftp_folder_configuration(self):
@@ -1569,6 +1579,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to share')
             logging.info(f"Folder selected: '{folder}'")
             self.ftpFolderLineEdit.setText(folder)
+            self.ftpFolderLineEdit.editingFinished.emit()
 
         logging.info('Starting FTP server...')
 

@@ -17,6 +17,7 @@ CONFIGURATION_FIELDS = {
     'ftp_max_connections': {'editable': True, 'validator': None},
     'ftp_max_connections_per_ip': {'editable': True, 'validator': None},
     'ftp_folder': {'editable': True, 'validator': None},
+    'ftp_users_can_upload_files': {'editable': True, 'validator': None},
     'interlocutor_address': {'editable': True, 'validator': None},
     'interlocutor_port': {'editable': True, 'validator': None},
     'interlocutor_password': {'editable': True, 'validator': None},
