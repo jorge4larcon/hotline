@@ -290,7 +290,7 @@ class Ui_HotlineMainWindow(object):
         self.ftpIpAddressLineEdit.setMinimumSize(QtCore.QSize(110, 0))
         self.ftpIpAddressLineEdit.setMaximumSize(QtCore.QSize(110, 16777215))
         self.ftpIpAddressLineEdit.setText("")
-        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.ftpIpAddressLineEdit.setPlaceholderText("")
         self.ftpIpAddressLineEdit.setObjectName("ftpIpAddressLineEdit")
         self.formLayout_5.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.ftpIpAddressLineEdit)
@@ -351,6 +351,12 @@ class Ui_HotlineMainWindow(object):
         self.ftpFolderLineEdit.setMaximumSize(QtCore.QSize(110, 16777215))
         self.ftpFolderLineEdit.setObjectName("ftpFolderLineEdit")
         self.formLayout_5.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.ftpFolderLineEdit)
+        self.usersCanUploadFilesLabel = QtWidgets.QLabel(self.ftpServerConfigGroupBox)
+        self.usersCanUploadFilesLabel.setObjectName("usersCanUploadFilesLabel")
+        self.formLayout_5.setWidget(5, QtWidgets.QFormLayout.LabelRole, self.usersCanUploadFilesLabel)
+        self.ftpUsersCanUploadFilesCheckBox = QtWidgets.QCheckBox(self.ftpServerConfigGroupBox)
+        self.ftpUsersCanUploadFilesCheckBox.setObjectName("ftpUsersCanUploadFilesCheckBox")
+        self.formLayout_5.setWidget(5, QtWidgets.QFormLayout.FieldRole, self.ftpUsersCanUploadFilesCheckBox)
         self.verticalLayout_5.addLayout(self.formLayout_5)
         self.verticalLayout_19.addWidget(self.ftpServerConfigGroupBox)
         self.groupBox_7 = QtWidgets.QGroupBox(self.tabFTP)
@@ -696,8 +702,7 @@ class Ui_HotlineMainWindow(object):
         self.label.setText(_translate("HotlineMainWindow", "IPv4:"))
         self.newContactIpv4AddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "192.168.1.89"))
         self.label_2.setText(_translate("HotlineMainWindow", "IPv6:"))
-        self.newContactIpv6AddressLineEdit.setPlaceholderText(
-            _translate("HotlineMainWindow", "fe80::721c:e7ff:fe61:8a61%19"))
+        self.newContactIpv6AddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "fe80::721c:e7ff:fe61:8a61%19"))
         self.inboxPortLabel.setText(_translate("HotlineMainWindow", "Inbox port:"))
         self.fTPPortLabel.setText(_translate("HotlineMainWindow", "FTP port:"))
         self.addNewContactPushButton.setText(_translate("HotlineMainWindow", "Add"))
@@ -709,14 +714,14 @@ class Ui_HotlineMainWindow(object):
         self.maxConnectionsPerIPLabel.setText(_translate("HotlineMainWindow", "Max connections per IP:"))
         self.folderLabel.setText(_translate("HotlineMainWindow", "Folder:"))
         self.ftpFolderLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "C:\\Users\\muhammad\\"))
+        self.usersCanUploadFilesLabel.setText(_translate("HotlineMainWindow", "Users can upload files:"))
         self.groupBox_7.setTitle(_translate("HotlineMainWindow", "Banner"))
-        self.ftpBannerPlainTextEdit.setPlaceholderText(
-            _translate("HotlineMainWindow", "Type here a creative banner message :)"))
+        self.ftpBannerPlainTextEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here a creative banner message :)"))
         self.groupBox_8.setTitle(_translate("HotlineMainWindow", "Options"))
         self.ftpStartPushButton.setText(_translate("HotlineMainWindow", "Start"))
         self.ftpShutdownPushButton.setText(_translate("HotlineMainWindow", "Shutdown"))
         self.groupBox_9.setTitle(_translate("HotlineMainWindow", "Connected users"))
-        self.groupBox_10.setTitle(_translate("HotlineMainWindow", "Files"))
+        self.groupBox_10.setTitle(_translate("HotlineMainWindow", "Files and folders"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabFTP), _translate("HotlineMainWindow", "FTP"))
         self.groupBox.setTitle(_translate("HotlineMainWindow", "Server information"))
         self.iPAddressLabel_2.setText(_translate("HotlineMainWindow", "IP address:"))
@@ -733,22 +738,17 @@ class Ui_HotlineMainWindow(object):
         self.groupBox_11.setTitle(_translate("HotlineMainWindow", "Options"))
         self.interSignUpPushButton.setText(_translate("HotlineMainWindow", "Sign up"))
         self.groupBox_3.setTitle(_translate("HotlineMainWindow", "Interlocutor database"))
-        self.interSearchLineEdit.setPlaceholderText(
-            _translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
+        self.interSearchLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
         self.interSearchCriteriaComboBox.setItemText(0, _translate("HotlineMainWindow", "Name"))
         self.interSearchCriteriaComboBox.setItemText(1, _translate("HotlineMainWindow", "MAC address"))
         self.interSearchPushButton.setText(_translate("HotlineMainWindow", "Get"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor),
-                                  _translate("HotlineMainWindow", "Interlocutor"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor), _translate("HotlineMainWindow", "Interlocutor"))
         self.groupBox_4.setTitle(_translate("HotlineMainWindow", "My downloads"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1),
-                                    _translate("HotlineMainWindow", "192.168.1.70"))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1), _translate("HotlineMainWindow", "192.168.1.70"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("HotlineMainWindow", "Tab 2"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads),
-                                  _translate("HotlineMainWindow", "Downloads"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads), _translate("HotlineMainWindow", "Downloads"))
         self.groupBox_5.setTitle(_translate("HotlineMainWindow", "My notifications"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications),
-                                  _translate("HotlineMainWindow", "Notifications"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), _translate("HotlineMainWindow", "Notifications"))
 
 
 class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
@@ -784,7 +784,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
         self.loadFtpConfiguration()
         self.setupFtpFilesTable()
-        # self.loadFtpFilesTable()
+        self.loadFtpFilesTable()
+
+        self.setupFtpConnectedUsersTable()
 
     def setupInterlocutorTab(self):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
@@ -1071,7 +1073,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         ip = ipv4 if ipv4 else (ipv6 if ipv6 else 'Could not obtain your IP address')
         max_conn = max_conn if max_conn else 10
         max_conn_per_ip = max_conn_per_ip if max_conn_per_ip else 1
-        folder = folder if folder else ''
+        folder = folder if folder and os.path.isdir(folder) else ''
         banner = banner if banner is not None else ''
         port = port if port is not None else 21
         self.ftpIpAddressLineEdit.setText(ip)
@@ -1339,6 +1341,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         # self.conversationsTableWidget.selectRow(0)
         self.conversationsTableWidget.item(0, 0).setSelected(True)
 
+    def setupFtpConnectedUsersTable(self):
+        tableHeaders = ['IP', 'Port']
+        self.ftpConnectedUsersTableWidget.setColumnCount(len(tableHeaders))
+        self.ftpConnectedUsersTableWidget.setHorizontalHeaderLabels(tableHeaders)
+        hHeader = self.ftpConnectedUsersTableWidget.horizontalHeader()
+        hHeader.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        hHeader.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+
     def setupFtpFilesTable(self):
         tableHeaders = ['Name', 'Type', 'Size']
         self.ftpFilesTableWidget.setColumnCount(len(tableHeaders))
@@ -1361,15 +1371,32 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
             for row, file in enumerate(files):
                 if os.path.isdir(os.path.join(path, file)):
-                    self.ftpFilesTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(file))
-                    self.ftpFilesTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem('Directory'))
-                    self.ftpFilesTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem('Unknown'))
+                    item = QtWidgets.QTableWidgetItem(file)
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 0, item)
+
+                    item = QtWidgets.QTableWidgetItem('Folder')
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 1, item)
+
+                    item = QtWidgets.QTableWidgetItem('Unknown')
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 2, item)
                 else:
                     filename, extension = os.path.splitext(file)
                     size = os.path.getsize(os.path.join(path, file))
-                    self.ftpFilesTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(filename))
-                    self.ftpFilesTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(extension))
-                    self.ftpFilesTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(f'{size} bytes'))
+
+                    item = QtWidgets.QTableWidgetItem(filename)
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 0, item)
+
+                    item = QtWidgets.QTableWidgetItem(extension)
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 1, item)
+
+                    item = QtWidgets.QTableWidgetItem(f'{size} bytes')
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.ftpFilesTableWidget.setItem(row, 2, item)
 
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
