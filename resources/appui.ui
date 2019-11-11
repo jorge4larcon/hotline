@@ -96,6 +96,13 @@
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                  <item>
+                  <widget class="QLabel" name="chatMateMacAddressLabel">
+                   <property name="text">
+                    <string>MAC address</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
                   <spacer name="horizontalSpacer_5">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -129,7 +136,11 @@
                 </layout>
                </item>
                <item>
-                <widget class="QTextEdit" name="textEdit"/>
+                <widget class="QTextEdit" name="chatTextEdit">
+                 <property name="readOnly">
+                  <bool>true</bool>
+                 </property>
+                </widget>
                </item>
                <item>
                 <layout class="QHBoxLayout" name="horizontalLayout_15">
@@ -1223,9 +1234,8 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <tabstops>
-  <tabstop>newContactInboxPortSpinBox</tabstop>
-  <tabstop>newContactFtpPortSpinBox</tabstop>
-  <tabstop>addNewContactPushButton</tabstop>
+  <tabstop>chatMateFilesPushButton</tabstop>
+  <tabstop>chatMateAddToContactsPushButton</tabstop>
   <tabstop>ftpIpAddressLineEdit</tabstop>
   <tabstop>ftpPortSpinBox</tabstop>
   <tabstop>ftpMaxConnectionsSpinBox</tabstop>
@@ -1251,6 +1261,23 @@
   <tabstop>contactsTableWidget</tabstop>
   <tabstop>newContactNameLineEdit</tabstop>
   <tabstop>newContactMacAddressLineEdit</tabstop>
+  <tabstop>newContactIpv4AddressLineEdit</tabstop>
+  <tabstop>newContactIpv6AddressLineEdit</tabstop>
+  <tabstop>newContactInboxPortSpinBox</tabstop>
+  <tabstop>newContactFtpPortSpinBox</tabstop>
+  <tabstop>addNewContactPushButton</tabstop>
+  <tabstop>chatTextEdit</tabstop>
+  <tabstop>messageLineEdit</tabstop>
+  <tabstop>sendMessagePushButton</tabstop>
+  <tabstop>findContactPushButton</tabstop>
+  <tabstop>newChatPushButton</tabstop>
+  <tabstop>conversationsTableWidget</tabstop>
+  <tabstop>ftpFolderLineEdit</tabstop>
+  <tabstop>ftpConnectedUsersTableWidget</tabstop>
+  <tabstop>ftpFilesTableWidget</tabstop>
+  <tabstop>interSearchCriteriaComboBox</tabstop>
+  <tabstop>tabWidget_2</tabstop>
+  <tabstop>notificationsTableWidget</tabstop>
  </tabstops>
  <resources/>
  <connections/>

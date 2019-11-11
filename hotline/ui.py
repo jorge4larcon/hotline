@@ -76,6 +76,9 @@ class Ui_HotlineMainWindow(object):
         self.verticalLayout_24.setObjectName("verticalLayout_24")
         self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_14.setObjectName("horizontalLayout_14")
+        self.chatMateMacAddressLabel = QtWidgets.QLabel(self.chatGroupBox)
+        self.chatMateMacAddressLabel.setObjectName("chatMateMacAddressLabel")
+        self.horizontalLayout_14.addWidget(self.chatMateMacAddressLabel)
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_14.addItem(spacerItem1)
         self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
@@ -88,9 +91,10 @@ class Ui_HotlineMainWindow(object):
         self.horizontalLayout_13.addWidget(self.chatMateAddToContactsPushButton)
         self.horizontalLayout_14.addLayout(self.horizontalLayout_13)
         self.verticalLayout_24.addLayout(self.horizontalLayout_14)
-        self.textEdit = QtWidgets.QTextEdit(self.chatGroupBox)
-        self.textEdit.setObjectName("textEdit")
-        self.verticalLayout_24.addWidget(self.textEdit)
+        self.chatTextEdit = QtWidgets.QTextEdit(self.chatGroupBox)
+        self.chatTextEdit.setReadOnly(True)
+        self.chatTextEdit.setObjectName("chatTextEdit")
+        self.verticalLayout_24.addWidget(self.chatTextEdit)
         self.horizontalLayout_15 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_15.setObjectName("horizontalLayout_15")
         self.messageLineEdit = QtWidgets.QLineEdit(self.chatGroupBox)
@@ -622,9 +626,8 @@ class Ui_HotlineMainWindow(object):
         self.tabWidget.setCurrentIndex(0)
         self.tabWidget_2.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(HotlineMainWindow)
-        HotlineMainWindow.setTabOrder(self.newContactInboxPortSpinBox, self.newContactFtpPortSpinBox)
-        HotlineMainWindow.setTabOrder(self.newContactFtpPortSpinBox, self.addNewContactPushButton)
-        HotlineMainWindow.setTabOrder(self.addNewContactPushButton, self.ftpIpAddressLineEdit)
+        HotlineMainWindow.setTabOrder(self.chatMateFilesPushButton, self.chatMateAddToContactsPushButton)
+        HotlineMainWindow.setTabOrder(self.chatMateAddToContactsPushButton, self.ftpIpAddressLineEdit)
         HotlineMainWindow.setTabOrder(self.ftpIpAddressLineEdit, self.ftpPortSpinBox)
         HotlineMainWindow.setTabOrder(self.ftpPortSpinBox, self.ftpMaxConnectionsSpinBox)
         HotlineMainWindow.setTabOrder(self.ftpMaxConnectionsSpinBox, self.ftpMaxConnectionsPerIPSpinBox)
@@ -649,6 +652,23 @@ class Ui_HotlineMainWindow(object):
         HotlineMainWindow.setTabOrder(self.searchContactCriteriaComboBox, self.contactsTableWidget)
         HotlineMainWindow.setTabOrder(self.contactsTableWidget, self.newContactNameLineEdit)
         HotlineMainWindow.setTabOrder(self.newContactNameLineEdit, self.newContactMacAddressLineEdit)
+        HotlineMainWindow.setTabOrder(self.newContactMacAddressLineEdit, self.newContactIpv4AddressLineEdit)
+        HotlineMainWindow.setTabOrder(self.newContactIpv4AddressLineEdit, self.newContactIpv6AddressLineEdit)
+        HotlineMainWindow.setTabOrder(self.newContactIpv6AddressLineEdit, self.newContactInboxPortSpinBox)
+        HotlineMainWindow.setTabOrder(self.newContactInboxPortSpinBox, self.newContactFtpPortSpinBox)
+        HotlineMainWindow.setTabOrder(self.newContactFtpPortSpinBox, self.addNewContactPushButton)
+        HotlineMainWindow.setTabOrder(self.addNewContactPushButton, self.chatTextEdit)
+        HotlineMainWindow.setTabOrder(self.chatTextEdit, self.messageLineEdit)
+        HotlineMainWindow.setTabOrder(self.messageLineEdit, self.sendMessagePushButton)
+        HotlineMainWindow.setTabOrder(self.sendMessagePushButton, self.findContactPushButton)
+        HotlineMainWindow.setTabOrder(self.findContactPushButton, self.newChatPushButton)
+        HotlineMainWindow.setTabOrder(self.newChatPushButton, self.conversationsTableWidget)
+        HotlineMainWindow.setTabOrder(self.conversationsTableWidget, self.ftpFolderLineEdit)
+        HotlineMainWindow.setTabOrder(self.ftpFolderLineEdit, self.ftpConnectedUsersTableWidget)
+        HotlineMainWindow.setTabOrder(self.ftpConnectedUsersTableWidget, self.ftpFilesTableWidget)
+        HotlineMainWindow.setTabOrder(self.ftpFilesTableWidget, self.interSearchCriteriaComboBox)
+        HotlineMainWindow.setTabOrder(self.interSearchCriteriaComboBox, self.tabWidget_2)
+        HotlineMainWindow.setTabOrder(self.tabWidget_2, self.notificationsTableWidget)
 
     def retranslateUi(self, HotlineMainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -656,6 +676,7 @@ class Ui_HotlineMainWindow(object):
         self.conversationsGroupBox.setTitle(_translate("HotlineMainWindow", "Conversations"))
         self.newChatPushButton.setText(_translate("HotlineMainWindow", "New chat"))
         self.chatGroupBox.setTitle(_translate("HotlineMainWindow", "A_Username"))
+        self.chatMateMacAddressLabel.setText(_translate("HotlineMainWindow", "MAC address"))
         self.chatMateFilesPushButton.setText(_translate("HotlineMainWindow", "Files"))
         self.chatMateAddToContactsPushButton.setText(_translate("HotlineMainWindow", "Add to contacts"))
         self.messageLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type your message here"))
@@ -757,13 +778,45 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         self.loadFtpConfiguration()
         self.loadInterlocutorConfiguration()
+
         self.setupContactsTable()
         self.loadContactsTable()
 
         self.setupConversationsTable()
         self.loadConversationsTable()
 
-        self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
+        # self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
+        # self.conversationsTableWidget.cellClicked.connect(self.open_conversation_from_table_cell)
+
+    @QtCore.pyqtSlot(int, int)
+    def open_conversation_from_table_cell(self, row, col):
+        text = self.conversationsTableWidget.item(row, col).text().split('\n')
+        name = text[0]
+        mac_address = text[1]
+
+        if mac_address == self.chatMateMacAddressLabel.text():
+            logging.info('The conversation is opened, do nothing')
+            return
+
+        self.chatTextEdit.setText('')
+        logging.info(f"Opening conversation with '{name}' '{mac_address}'")
+        self.chatGroupBox.setTitle(name)
+        self.chatMateMacAddressLabel.setText(mac_address)
+        conn = dbfunctions.get_connection()
+        messages = dbfunctions.last_sent_or_received_messages_from_contact(conn, mac_address, 50)
+        conn.close()
+        text = ''
+        for message in reversed(messages):
+            if message['type'] == 'received':
+                text = f"S[{message['sent_timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
+                # text += f"""<b>R[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
+
+            else:
+                text = f"S[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['received_timestamp'].strftime('%b %d %Y %I:%M %p')}] Me: {message['content']}"
+                # text += f"""<b>S[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
+
+            self.chatTextEdit.append(text)
+        # self.chatTextEdit.setHtml(text)
 
     @QtCore.pyqtSlot(int, int)
     def update_contact_from_table_cell(self, row, cell):
@@ -919,8 +972,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         btn = self.sender()
         if btn:
             row = self.contactsTableWidget.indexAt(btn.pos()).row()
+            logging.info(f"Row selected: {row}")
             mac_address = self.contactsTableWidget.item(row, 1).text()
-            logging.info(f"Starting chat with '{mac_address}'")
+            name = self.contactsTableWidget.item(row, 0).text()
+            logging.info(f"Starting chat with '{name}' '{mac_address}'")
+            self.tabWidget.setCurrentIndex(0)
+            self.addConversationToConversationsTable(mac_address, name)
 
     @QtCore.pyqtSlot()
     def delete_contact_row(self):
@@ -997,6 +1054,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         item_to_scroll = self.contactsTableWidget.item(row_to_scroll, col)
         self.contactsTableWidget.scrollToItem(item_to_scroll, QtWidgets.QAbstractItemView.PositionAtTop)
         self.contactsTableWidget.selectRow(row_to_scroll)
+        # item_to_scroll.setSelected(True)
 
         self.lastMatchingRow = row_to_scroll + 1
         print('last matching row:', self.lastMatchingRow)
@@ -1042,12 +1100,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
 
     def setupConversationsTable(self):
-        conversationsTableHeaders = ['Name', 'MAC']
+        conversationsTableHeaders = ['Contacts']
         self.conversationsTableWidget.setColumnCount(len(conversationsTableHeaders))
-        # self.conversationsTableWidget.setHorizontalHeaderLabels(conversationsTableHeaders)
+        self.conversationsTableWidget.setHorizontalHeaderLabels(conversationsTableHeaders)
+        self.conversationsTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.conversationsTableWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         conversationsTableHeader = self.conversationsTableWidget.horizontalHeader()
         for col in range(len(conversationsTableHeader)):
-            conversationsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.ResizeToContents)
+            conversationsTableHeader.setSectionResizeMode(col, QtWidgets.QHeaderView.Stretch)
 
     def loadConversationsTable(self):
         conn = dbfunctions.get_connection()
@@ -1055,13 +1115,51 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         conn.close()
         self.conversationsTableWidget.setRowCount(len(last_messages))
         try:
-            self.conversationsTableWidget.cellChanged.disconnect()
+            self.conversationsTableWidget.cellClicked.disconnect()
         except:
             pass
         for row, message in enumerate(last_messages):
-            self.conversationsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(message['name']))
-            self.conversationsTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(message['mac_address']))
-            # self.conversationsTableWidget.setItem(row, 2, QtWidgets.QTableWidgetItem(message['content']))
+            item = QtWidgets.QTableWidgetItem(f"{message['name']}\n{message['mac_address']}")
+            item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+            self.conversationsTableWidget.setItem(row, 0, item)
+            self.conversationsTableWidget.setRowHeight(row, 40)
+
+        self.conversationsTableWidget.cellClicked.connect(self.open_conversation_from_table_cell)
+
+        if self.conversationsTableWidget.rowCount():
+            self.conversationsTableWidget.cellClicked.emit(0, 0)
+
+    def addConversationToConversationsTable(self, mac_address, name):
+        try:
+            self.conversationsTableWidget.cellClicked.disconnect()
+        except:
+            pass
+
+        for row in range(self.conversationsTableWidget.rowCount()):
+            mac = self.conversationsTableWidget.item(row, 0).text().split('\n')[1]
+            if mac_address == mac:
+                # The conversation already exists, dont add it, just scroll to the item
+                logging.info(f"The conversation with '{mac_address}' exists, scrolling down")
+                item_to_scroll = self.conversationsTableWidget.item(row, 0)
+                self.conversationsTableWidget.scrollToItem(item_to_scroll, QtWidgets.QAbstractItemView.PositionAtTop)
+                self.conversationsTableWidget.cellClicked.connect(self.open_conversation_from_table_cell)
+                self.conversationsTableWidget.cellClicked.emit(row, 0)
+                self.conversationsTableWidget.clearSelection()
+                # self.conversationsTableWidget.selectRow(row)
+                self.conversationsTableWidget.item(row, 0).setSelected(True)
+                return
+
+        self.conversationsTableWidget.insertRow(0)
+        item = QtWidgets.QTableWidgetItem(f"{name}\n{mac_address}")
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.conversationsTableWidget.setItem(0, 0, QtWidgets.QTableWidgetItem(item))
+        self.conversationsTableWidget.setRowHeight(0, 40)
+
+        self.conversationsTableWidget.cellClicked.connect(self.open_conversation_from_table_cell)
+        self.conversationsTableWidget.cellClicked.emit(0, 0)
+        self.conversationsTableWidget.clearSelection()
+        # self.conversationsTableWidget.selectRow(0)
+        self.conversationsTableWidget.item(0, 0).setSelected(True)
 
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',

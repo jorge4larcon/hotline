@@ -173,6 +173,12 @@ def last_sent_messages(conn: sqlite3.Connection, limit=10):
         return conn.execute(statement, (limit,)).fetchall()
 
 
+def last_sent_messages_to_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    statement = 'SELECT sent_timestamp, received_timestamp, receiver_contact, name, content FROM SentMessage, Contact WHERE receiver_contact = ? AND receiver_contact = mac_address ORDER BY sent_timestamp DESC LIMIT ?;'
+    with conn:
+        return conn.execute(statement, (mac_address, limit))
+
+
 def insert_sent_message(conn: sqlite3.Connection, sent_timestamp, receiver_contact, content, received_timestamp):
     statement = 'INSERT INTO SentMessage(sent_timestamp, receiver_contact, content, received_timestamp) ' \
                 'VALUES (?, ?, ?, ?)'
@@ -227,6 +233,12 @@ def last_received_messages(conn: sqlite3.Connection, limit=10):
         return conn.execute(statement, (limit,)).fetchall()
 
 
+def last_received_messages_from_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    statement = 'SELECT received_timestamp, sent_timestamp, sender_contact, name, content FROM ReceivedMessage, Contact WHERE sender_contact = ? AND sender_contact = mac_address ORDER BY received_timestamp DESC LIMIT ?'
+    with conn:
+        return conn.execute(statement, (mac_address, limit))
+
+
 def update_received_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
     fields = [*filter(lambda f: f in RECEIVED_MESSAGE_FIELDS and RECEIVED_MESSAGE_FIELDS[f]['editable'], kwargs)]
     if fields:
@@ -261,6 +273,37 @@ def received_messages(conn: sqlite3.Connection):
             'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC').fetchall()
 
 
+def last_sent_or_received_messages_from_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    received_messages = last_received_messages_from_contact(conn, mac_address, limit)
+    sent_messages = last_sent_messages_to_contact(conn, mac_address, limit)
+    messages = []
+
+    for received in received_messages:
+        message = {
+            'mac_address': received['sender_contact'],
+            'name': received['name'],
+            'timestamp': datetime.datetime.fromisoformat(received['received_timestamp']),
+            'sent_timestamp': datetime.datetime.fromisoformat(received['sent_timestamp']),
+            'content': received['content'],
+            'type': 'received'
+        }
+        messages.append(message)
+
+    for sent in sent_messages:
+        message = {
+            'mac_address': sent['receiver_contact'],
+            'name': sent['name'],
+            'timestamp': datetime.datetime.fromisoformat(sent['sent_timestamp']),
+            'received_timestamp': datetime.datetime.fromisoformat(sent['received_timestamp']),
+            'content': sent['content'],
+            'type': 'sent'
+        }
+        messages.append(message)
+
+    messages = sorted(messages, key=operator.itemgetter('timestamp'), reverse=True)
+    return messages[:limit]
+
+
 def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
     last_sent = last_sent_messages(conn, limit)
     last_received = last_received_messages(conn, limit)
@@ -270,8 +313,7 @@ def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
         contact = {
             'mac_address': received['sender_contact'],
             'timestamp': datetime.datetime.fromisoformat(received['MAX(received_timestamp)']),
-            'name': received['name'],
-            'type': 'received'
+            'name': received['name']
         }
         last_messenguers.append(contact)
 
@@ -280,19 +322,18 @@ def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
             'mac_address': sent['receiver_contact'],
             'timestamp': datetime.datetime.fromisoformat(sent['MAX(sent_timestamp)']),
             'name': sent['name'],
-            'type': 'sent'
         }
         exist = False
         for messenguer in last_messenguers:
             if messenguer['mac_address'] == contact['mac_address']:
-                print(f"The contact '{messenguer['mac_address']}' exists")
+                logging.debug(f"The contact '{messenguer['mac_address']}' exists")
                 exist = True
                 messenger_timestamp = messenguer['timestamp']
                 if contact['timestamp'] > messenger_timestamp:
-                    print(f"Updating timestamp")
-                    print(f"Old timestamp: {messenguer['timestamp'].isoformat()}")
+                    logging.debug(f"Updating timestamp")
+                    logging.debug(f"Old timestamp: {messenguer['timestamp'].isoformat()}")
                     messenguer['timestamp'] = contact['timestamp']
-                    print(f"New timestamp: {messenguer['timestamp'].isoformat()}")
+                    logging.debug(f"New timestamp: {messenguer['timestamp'].isoformat()}")
 
         if not exist:
             last_messenguers.append(contact)
@@ -325,6 +366,23 @@ if __name__ == '__main__':
 
     set_dbpath(debug_database_path())
     conn = get_connection()
-    last_messages = last_sent_received_messages(conn)
-    for m in last_messages:
+
+    print('Last messages with McGleen')
+
+    messages = last_sent_or_received_messages_from_contact(conn, 'eeee.fefe.acdf', limit=10)
+    for m in messages:
         print(m)
+
+
+    # last_messages_from_mcgleen = last_received_messages_from_contact(conn, 'eeee.fefe.acdf', 1)
+    # for m in last_messages_from_mcgleen:
+    #     print(dict(m))
+    #
+    # print('Las messages to McGleen')
+    # last_messages_to_mcgleen = last_sent_messages_to_contact(conn, 'eeee.fefe.acdf', 1)
+    # for m in last_messages_to_mcgleen:
+    #     print(dict(m))
+    conn.close()
+    # last_messages = last_sent_received_messages(conn)
+    # for m in last_messages:
+    #     print(m)
