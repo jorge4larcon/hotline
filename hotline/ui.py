@@ -22,6 +22,7 @@ import os
 import dbfunctions
 import valid
 import sqlite3
+import pyftpdlib
 
 
 class Ui_HotlineMainWindow(object):
@@ -1097,7 +1098,123 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setText(ipv4)
         self.myContactInfoMacAddressLineEdit.setText(mac_address)
         self.myContactInfoNameLineEdit.setText(username)
-        self.myContactInfoGetOnlyByMacCheckBox.setCheckState(get_only_by_mac)
+        self.myContactInfoInboxPortSpinBox.setValue(inbox_port)
+        self.myContactInfoGetOnlyByMacCheckBox.setChecked(get_only_by_mac)
+
+        self.interIpAddressLineEdit.editingFinished.connect(self.save_inter_ip_address_configuration)
+        self.interPortSpinBox.editingFinished.connect(self.save_inter_port_configuration)
+        self.interPasswordLineEdit.editingFinished.connect(self.save_inter_password_configuration)
+
+        self.myContactInfoNameLineEdit.editingFinished.connect(self.save_my_contact_info_name_configuration)
+        self.myContactInfoInboxPortSpinBox.editingFinished.connect(self.save_my_contact_info_inbox_port_configuration)
+        self.myContactInfoGetOnlyByMacCheckBox.stateChanged.connect(self.save_my_contact_info_get_only_by_mac_configuration)
+
+    @QtCore.pyqtSlot(int)
+    def save_my_contact_info_get_only_by_mac_configuration(self, new_state):
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, get_only_by_mac=new_state)
+        conn.close()
+        logging.info(f"New value '{new_state}' for field 'get_only_by_mac'")
+
+    @QtCore.pyqtSlot()
+    def save_my_contact_info_inbox_port_configuration(self):
+        new_port = self.myContactInfoInboxPortSpinBox.value()
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, inbox_port=new_port)
+        conn.close()
+        logging.info(f"New value '{new_port}' for field 'inbox_port'")
+
+    @QtCore.pyqtSlot()
+    def save_my_contact_info_name_configuration(self):
+        new_name = self.myContactInfoNameLineEdit.text()
+
+        try:
+            valid.is_name(new_name, True)
+        except Exception as e:
+            logging.error(e)
+            conn = dbfunctions.get_connection()
+            old_name = dbfunctions.get_configuration(conn, 'username')
+            conn.close()
+            self.myContactInfoNameLineEdit.setText(old_name)
+            msg = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Critical,
+                'Error',
+                f'{e}',
+                QtWidgets.QMessageBox.Ok
+            )
+            answer = msg.exec_()
+        else:
+            conn = dbfunctions.get_connection()
+            dbfunctions.update_configuration(conn, username=new_name)
+            conn.close()
+            logging.info(f"New value '{new_name}' for field 'username'")
+
+    @QtCore.pyqtSlot()
+    def save_inter_password_configuration(self):
+        new_password = self.interPasswordLineEdit.text()
+
+        try:
+            valid.is_valid_password(new_password, True)
+        except Exception as e:
+            logging.error(e)
+            conn = dbfunctions.get_connection()
+            old_pass = dbfunctions.get_configuration(conn, 'interlocutor_password')
+            conn.close()
+            self.interPasswordLineEdit.setText(old_pass)
+            msg = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Critical,
+                'Error',
+                f'{e}',
+                QtWidgets.QMessageBox.Ok
+            )
+            answer = msg.exec_()
+        else:
+            conn = dbfunctions.get_connection()
+            dbfunctions.update_configuration(conn, interlocutor_password=new_password)
+            conn.close()
+            logging.info(f"New value '{new_password}' for field 'interlocutor_password'")
+
+    @QtCore.pyqtSlot()
+    def save_inter_port_configuration(self):
+        new_port = self.interPortSpinBox.value()
+        conn = dbfunctions.get_connection()
+        dbfunctions.update_configuration(conn, interlocutor_port=new_port)
+        conn.close()
+        logging.info(f"New value '{new_port}' for field 'interlocutor_port'")
+
+    @QtCore.pyqtSlot()
+    def save_inter_ip_address_configuration(self):
+        new_ip = self.interIpAddressLineEdit.text()
+
+        if new_ip == '':
+            conn = dbfunctions.get_connection()
+            dbfunctions.update_configuration(conn, interlocutor_address=new_ip)
+            conn.close()
+            logging.info(f"New value '{new_ip}' for field 'interlocutor_address'")
+        else:
+            try:
+                valid.is_ipv4_address(new_ip, True)
+            except Exception as e:
+                logging.error(e)
+                ##### Recover the last value from the db
+                conn = dbfunctions.get_connection()
+                old_value = dbfunctions.get_configuration(conn, 'interlocutor_address')
+                conn.close()
+                self.interIpAddressLineEdit.setText(old_value)
+
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f'{e}',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+
+            else:
+                conn = dbfunctions.get_connection()
+                dbfunctions.update_configuration(conn, interlocutor_address=new_ip)
+                conn.close()
+                logging.info(f"New value '{new_ip}' for field 'interlocutor_address'")
 
     def setupConversationsTable(self):
         conversationsTableHeaders = ['Contacts']

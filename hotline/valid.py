@@ -54,3 +54,11 @@ def is_valid_message_content(content: str, exception=False) -> bool:
         raise ValueError('The message content is a str, with a length that must be within the range [1,2048]')
 
     return is_valid
+
+
+def is_valid_password(password: str, exception=False) -> bool:
+    is_valid = password.isascii()
+    if exception and not is_valid:
+        raise ValueError('The password must only contain ascii characters')
+
+    return is_valid
