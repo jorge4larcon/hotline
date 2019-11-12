@@ -15,7 +15,7 @@ class FtpServerSignals(QtCore.QObject):
     on_logout = QtCore.pyqtSignal(str, int, str)
 
     on_start = QtCore.pyqtSignal()
-    on_end = QtCore.pyqtSignal()
+    on_shutdown = QtCore.pyqtSignal()
 
     # remote_ip, remote_port, filename
     on_file_sent = QtCore.pyqtSignal(str, int, str)
@@ -83,17 +83,21 @@ class FtpServer(QtCore.QRunnable):
         authorizer = DummyAuthorizer()
         authorizer.add_user('hotline', 'hotpassword', homedir=self.folder, perm=self.permisions)
         handler = MyHandler
+        handler.banner = self.banner
         handler.authorizer = authorizer
         self.handler = handler
         self.handler.signals = self.signals
         self.server = FTPServer((self.ip, self.port), handler)
+        self.server.max_cons = self.max_connections
+        self.server.max_cons_per_ip = self.max_connections_per_ip
         # server = FTPServer((self.ip, self.port), handler)
         try:
+            self.signals.on_start.emit()
             self.server.serve_forever()
         except Exception as e:
             self.signals.on_error.emit(e)
-        else:
-            self.signals.on_start.emit()
 
-    def stop(self):
-        self.server.close()
+    def my_jorge_shutdown(self):
+        self.signals.on_shutdown.emit()
+        # self.server.close()
+        self.server.close_all()

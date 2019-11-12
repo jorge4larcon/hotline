@@ -290,7 +290,7 @@ class Ui_HotlineMainWindow(object):
         self.ftpIpAddressLineEdit.setMinimumSize(QtCore.QSize(110, 0))
         self.ftpIpAddressLineEdit.setMaximumSize(QtCore.QSize(110, 16777215))
         self.ftpIpAddressLineEdit.setText("")
-        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.ftpIpAddressLineEdit.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.ftpIpAddressLineEdit.setPlaceholderText("")
         self.ftpIpAddressLineEdit.setObjectName("ftpIpAddressLineEdit")
         self.formLayout_5.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.ftpIpAddressLineEdit)
@@ -702,7 +702,8 @@ class Ui_HotlineMainWindow(object):
         self.label.setText(_translate("HotlineMainWindow", "IPv4:"))
         self.newContactIpv4AddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "192.168.1.89"))
         self.label_2.setText(_translate("HotlineMainWindow", "IPv6:"))
-        self.newContactIpv6AddressLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "fe80::721c:e7ff:fe61:8a61%19"))
+        self.newContactIpv6AddressLineEdit.setPlaceholderText(
+            _translate("HotlineMainWindow", "fe80::721c:e7ff:fe61:8a61%19"))
         self.inboxPortLabel.setText(_translate("HotlineMainWindow", "Inbox port:"))
         self.fTPPortLabel.setText(_translate("HotlineMainWindow", "FTP port:"))
         self.addNewContactPushButton.setText(_translate("HotlineMainWindow", "Add"))
@@ -716,7 +717,8 @@ class Ui_HotlineMainWindow(object):
         self.ftpFolderLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "C:\\Users\\muhammad\\"))
         self.usersCanUploadFilesLabel.setText(_translate("HotlineMainWindow", "Users can upload files:"))
         self.groupBox_7.setTitle(_translate("HotlineMainWindow", "Banner"))
-        self.ftpBannerPlainTextEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here a creative banner message :)"))
+        self.ftpBannerPlainTextEdit.setPlaceholderText(
+            _translate("HotlineMainWindow", "Type here a creative banner message :)"))
         self.groupBox_8.setTitle(_translate("HotlineMainWindow", "Options"))
         self.ftpStartPushButton.setText(_translate("HotlineMainWindow", "Start"))
         self.ftpShutdownPushButton.setText(_translate("HotlineMainWindow", "Shutdown"))
@@ -738,17 +740,22 @@ class Ui_HotlineMainWindow(object):
         self.groupBox_11.setTitle(_translate("HotlineMainWindow", "Options"))
         self.interSignUpPushButton.setText(_translate("HotlineMainWindow", "Sign up"))
         self.groupBox_3.setTitle(_translate("HotlineMainWindow", "Interlocutor database"))
-        self.interSearchLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
+        self.interSearchLineEdit.setPlaceholderText(
+            _translate("HotlineMainWindow", "Type here the name or MAC address of the user you want to get"))
         self.interSearchCriteriaComboBox.setItemText(0, _translate("HotlineMainWindow", "Name"))
         self.interSearchCriteriaComboBox.setItemText(1, _translate("HotlineMainWindow", "MAC address"))
         self.interSearchPushButton.setText(_translate("HotlineMainWindow", "Get"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor), _translate("HotlineMainWindow", "Interlocutor"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor),
+                                  _translate("HotlineMainWindow", "Interlocutor"))
         self.groupBox_4.setTitle(_translate("HotlineMainWindow", "My downloads"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1), _translate("HotlineMainWindow", "192.168.1.70"))
+        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1),
+                                    _translate("HotlineMainWindow", "192.168.1.70"))
         self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("HotlineMainWindow", "Tab 2"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads), _translate("HotlineMainWindow", "Downloads"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads),
+                                  _translate("HotlineMainWindow", "Downloads"))
         self.groupBox_5.setTitle(_translate("HotlineMainWindow", "My notifications"))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), _translate("HotlineMainWindow", "Notifications"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications),
+                                  _translate("HotlineMainWindow", "Notifications"))
 
 
 class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
@@ -787,6 +794,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.ftpIpAddressLineEdit.setReadOnly(True)
         self.ftpShutdownPushButton.setEnabled(False)
         self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
+        self.ftpShutdownPushButton.clicked.connect(self.ftpShutdownPushButtonAction)
         self.loadFtpConfiguration()
         self.setupFtpFilesTable()
         self.loadFtpFilesTable()
@@ -1588,19 +1596,80 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             self.ftpFolderLineEdit.editingFinished.emit()
 
         logging.info('Starting FTP server...')
-        self.ftpServerThread = ftp.FtpServer(address, port, max_connections, max_connections_per_ip, folder, banner, users_can_upload_files)
+        self.ftpServerThread = ftp.FtpServer(address, port, max_connections, max_connections_per_ip, folder, banner,
+                                             users_can_upload_files)
         self.ftpServerThread.signals.on_start.connect(self.ftp_server_on_start)
+        self.ftpServerThread.signals.on_shutdown.connect(self.ftp_server_on_shutdown)
         self.ftpServerThread.signals.on_error.connect(self.ftp_server_on_error)
+        self.ftpServerThread.signals.on_connect.connect(self.ftp_server_on_connect)
+        self.ftpServerThread.signals.on_disconnect.connect(self.ftp_server_on_disconnect)
         self.threadPool.start(self.ftpServerThread)
 
+    def ftpShutdownPushButtonAction(self):
+        logging.info('Shutting down the server')
+        self.ftpServerThread.my_jorge_shutdown()
+
+    @QtCore.pyqtSlot(str, int)
+    def ftp_server_on_connect(self, remote_ip, remote_port):
+        logging.info(f'New connection brother = {remote_ip}:{remote_port}')
+        self.addUserToFtpConnectedUsersTable(remote_ip, remote_port)
+
+
+    @QtCore.pyqtSlot(str, int)
+    def ftp_server_on_disconnect(self, remote_ip, remote_port):
+        logging.info(f'New disconnection brother = {remote_ip}:{remote_port}')
+        self.removeUserToFtpConnectedUsersTable(remote_ip)
+
+    def addUserToFtpConnectedUsersTable(self, ip, port):
+        print(f"ip= {ip} port={port}")
+        row = self.ftpConnectedUsersTableWidget.rowCount()
+        self.ftpConnectedUsersTableWidget.insertRow(row)
+        item = QtWidgets.QTableWidgetItem(ip)
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.ftpConnectedUsersTableWidget.setItem(row, 0, item)
+        item = QtWidgets.QTableWidgetItem(str(port))
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.ftpConnectedUsersTableWidget.setItem(row, 1, item)
+
+    def removeUserToFtpConnectedUsersTable(self, ip):
+        for row in range(self.ftpConnectedUsersTableWidget.rowCount()):
+            if self.ftpConnectedUsersTableWidget.item(row, 0).text() == ip:
+                self.ftpConnectedUsersTableWidget.removeRow(row)
+                return
 
     @QtCore.pyqtSlot()
     def ftp_server_on_start(self):
-        logging.info('Server started')
+        logging.info('FTP Server started')
+        self.ftpPortSpinBox.setEnabled(False)
+        self.ftpMaxConnectionsSpinBox.setEnabled(False)
+        self.ftpMaxConnectionsPerIPSpinBox.setEnabled(False)
+        self.ftpBannerPlainTextEdit.setEnabled(False)
+        self.ftpFolderLineEdit.setEnabled(False)
+        self.ftpUsersCanUploadFilesCheckBox.setEnabled(False)
+        self.ftpStartPushButton.setEnabled(False)
+        self.ftpShutdownPushButton.setEnabled(True)
+
+    def ftp_server_on_shutdown(self):
+        logging.info('FTP Server shutdown')
+        self.ftpPortSpinBox.setEnabled(True)
+        self.ftpMaxConnectionsSpinBox.setEnabled(True)
+        self.ftpMaxConnectionsPerIPSpinBox.setEnabled(True)
+        self.ftpBannerPlainTextEdit.setEnabled(True)
+        self.ftpFolderLineEdit.setEnabled(True)
+        self.ftpUsersCanUploadFilesCheckBox.setEnabled(True)
+        self.ftpStartPushButton.setEnabled(True)
+        self.ftpShutdownPushButton.setEnabled(False)
 
     @QtCore.pyqtSlot('PyQt_PyObject')
     def ftp_server_on_error(self, ex):
         logging.info(ex)
+        msg = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Critical,
+            'Error',
+            f'{ex}',
+            QtWidgets.QMessageBox.Ok
+        )
+        answer = msg.exec_()
 
     def onTabChange(self, i):
         self.update_tab(i)
