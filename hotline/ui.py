@@ -22,7 +22,7 @@ import os
 import dbfunctions
 import valid
 import sqlite3
-import pyftpdlib
+import ftp
 
 
 class Ui_HotlineMainWindow(object):
@@ -759,6 +759,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.searchCriteria = 'Name'
         self.findContactSearchPattern = ''
         self.lastMatchingRow = None
+
+        self.threadPool = QtCore.QThreadPool()
+        self.ftpServerThread = None
+
+        logging.info(f'max thread count = {self.threadPool.maxThreadCount()}')
 
         # When user changes between tabs, keep the information ordered
         self.tabWidget.currentChanged.connect(self.onTabChange)
@@ -1574,7 +1579,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         max_connections = self.ftpMaxConnectionsSpinBox.value()
         max_connections_per_ip = self.ftpMaxConnectionsPerIPSpinBox.value()
         banner = self.ftpBannerPlainTextEdit.toPlainText()
-        folder = self.ftpFolderLineEdit.text().strip()
+        folder = self.ftpFolderLineEdit.text()
+        users_can_upload_files = self.ftpUsersCanUploadFilesCheckBox.isChecked()
         if not os.path.isdir(folder):
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to share')
             logging.info(f"Folder selected: '{folder}'")
@@ -1582,6 +1588,19 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             self.ftpFolderLineEdit.editingFinished.emit()
 
         logging.info('Starting FTP server...')
+        self.ftpServerThread = ftp.FtpServer(address, port, max_connections, max_connections_per_ip, folder, banner, users_can_upload_files)
+        self.ftpServerThread.signals.on_start.connect(self.ftp_server_on_start)
+        self.ftpServerThread.signals.on_error.connect(self.ftp_server_on_error)
+        self.threadPool.start(self.ftpServerThread)
+
+
+    @QtCore.pyqtSlot()
+    def ftp_server_on_start(self):
+        logging.info('Server started')
+
+    @QtCore.pyqtSlot('PyQt_PyObject')
+    def ftp_server_on_error(self, ex):
+        logging.info(ex)
 
     def onTabChange(self, i):
         self.update_tab(i)

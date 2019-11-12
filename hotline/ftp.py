@@ -2,36 +2,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 from pyftpdlib.authorizers import DummyAuthorizer
 from PyQt5 import QtCore
-import pyftpdlib
-
-
-class MyHandler(FTPHandler):
-
-    def on_connect(self):
-        print("%s:%s connected" % (self.remote_ip, self.remote_port))
-
-    def on_disconnect(self):
-        print("%s:%s disconnected" % (self.remote_ip, self.remote_port))
-
-    def on_login(self, username):
-        print(f"'{username}' {self.remote_ip}:{self.remote_port}  logged in")
-
-    def on_logout(self, username):
-        print(f"'{username}' {self.remote_ip}:{self.remote_port}  logged out")
-
-    def on_file_sent(self, file):
-        print(f"Complete '{file}' send")
-
-    def on_file_received(self, file):
-        print(f"Complete '{file}' received")
-
-    def on_incomplete_file_sent(self, file):
-        print(f"Incomplete '{file}' send")
-
-    def on_incomplete_file_received(self, file):
-        print(f"Incomplete '{file}' received")
-        import os
-        os.remove(file)
+import logging
 
 
 class FtpServerSignals(QtCore.QObject):
@@ -50,9 +21,47 @@ class FtpServerSignals(QtCore.QObject):
     on_file_sent = QtCore.pyqtSignal(str, int, str)
     on_file_received = QtCore.pyqtSignal(str, int, str)
     on_incomplete_file_sent = QtCore.pyqtSignal(str, int, str)
-    on_incomplete_received_sent = QtCore.pyqtSignal(str, int, str)
+    on_incomplete_file_received = QtCore.pyqtSignal(str, int, str)
 
     on_error = QtCore.pyqtSignal('PyQt_PyObject')
+
+
+class MyHandler(FTPHandler):
+    signals: FtpServerSignals = None
+
+    def on_connect(self):
+        logging.info(f"ftp: new connection from {self.remote_ip}:{self.remote_port}")
+        self.signals.on_connect.emit(self.remote_ip, self.remote_port)
+
+    def on_disconnect(self):
+        logging.info(f"ftp: client {self.remote_ip}:{self.remote_port} disconnected")
+        self.signals.on_disconnect.emit(self.remote_ip, self.remote_port)
+
+    def on_login(self, username):
+        logging.info(f"ftp: '{username}' {self.remote_ip}:{self.remote_port} logged in")
+        self.signals.on_login.emit(self.remote_ip, self.remote_port, username)
+
+    def on_logout(self, username):
+        logging.info(f"ftp: '{username}' {self.remote_ip}:{self.remote_port} logged out")
+        self.signals.on_logout.emit(self.remote_ip, self.remote_port, username)
+
+    def on_file_sent(self, file):
+        logging.info(f"ftp: '{file}' was succesfully sent to {self.remote_ip}:{self.remote_port}")
+        self.signals.on_file_sent.emit(self.remote_ip, self.remote_port, file)
+
+    def on_file_received(self, file):
+        logging.info(f"ftp: '{file}' was succesfully received from {self.remote_ip}:{self.remote_port}")
+        self.signals.on_file_received.emit(self.remote_ip, self.remote_port, file)
+
+    def on_incomplete_file_sent(self, file):
+        logging.info(f"ftp: '{file}' was not fully sent to {self.remote_ip}:{self.remote_port}")
+        self.signals.on_incomplete_file_sent.emit(self.remote_ip, self.remote_port, file)
+
+    def on_incomplete_file_received(self, file):
+        logging.info(f"ftp: '{file}' was not fully received from {self.remote_ip}:{self.remote_port}")
+        self.signals.on_incomplete_file_received.emit(self.remote_ip, self.remote_port, file)
+        # import os
+        # os.remove(file)
 
 
 class FtpServer(QtCore.QRunnable):
@@ -75,32 +84,16 @@ class FtpServer(QtCore.QRunnable):
         authorizer.add_user('hotline', 'hotpassword', homedir=self.folder, perm=self.permisions)
         handler = MyHandler
         handler.authorizer = authorizer
-        server = FTPServer((self.ip, self.port), handler)
+        self.handler = handler
+        self.handler.signals = self.signals
+        self.server = FTPServer((self.ip, self.port), handler)
+        # server = FTPServer((self.ip, self.port), handler)
         try:
-            server.serve_forever()
-            server.
+            self.server.serve_forever()
         except Exception as e:
             self.signals.on_error.emit(e)
         else:
             self.signals.on_start.emit()
 
-
-def main():
-    authorizer = DummyAuthorizer()
-    read_permissions = 'elr'
-    write_permissions = 'w'
-    permissions = read_permissions + write_permissions
-    authorizer.add_user('hotline', 'hotpassword', homedir='.', perm=permissions)
-
-    handler = MyHandler
-    handler.authorizer = authorizer
-    server = FTPServer(('172.16.161.29', 2121), handler)
-    try:
-        server.serve_forever()
-    except Exception as e:
-        self
-
-
-
-if __name__ == "__main__":
-    main()
+    def stop(self):
+        self.server.close()
