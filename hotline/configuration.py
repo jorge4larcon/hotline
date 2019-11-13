@@ -15,6 +15,7 @@ def setup_network_information():
     conn = dbfunctions.get_connection()
     dbfunctions.update_configuration(conn, mac_address=mac, ipv4_address=ipv4, ipv6_address=ipv6)
     conn.close()
+    logging.info(f'Network information:\nIPv4={ipv4}\nIPv6={ipv6}\nIFACE={iface}\nMAC={mac}')
 
 
 def configure_logging(level):

@@ -22,13 +22,18 @@ if __name__ == '__main__':
     except Exception as e:
         logging.error(e)
 
+    err = None
     try:
         configuration.setup_network_information()
     except Exception as e:
         logging.error(f"Could not configure the network information: '{e}'")
+        err = True
 
     app = PyQt5.QtWidgets.QApplication(sys.argv)
-    window = ui.HotlineMainWindow()
+    if err:
+        window = ui.HotlineMainWindow(err='The app could not get the network information, no network functions available')
+    else:
+        window = ui.HotlineMainWindow()
     window.show()
     exit_code = app.exec_()
     logging.info('Closing app, setting some values in the DB')

@@ -23,6 +23,7 @@ import dbfunctions
 import valid
 import sqlite3
 import ftp
+import datetime
 
 
 class Ui_HotlineMainWindow(object):
@@ -779,6 +780,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.setupInterlocutorTab()
         self.setupContactsTab()
         self.setupChatsTab()
+        self.setupNotificationsTab()
+
+        if "err" in kwargs:
+            self.addNotificationToNotificationsTable(kwargs["err"])
 
     def setupChatsTab(self):
         self.setupConversationsTable()
@@ -805,6 +810,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
         self.loadInterlocutorConfiguration()
+
+    def setupNotificationsTab(self):
+        self.setupNotificationsTable()
 
     @QtCore.pyqtSlot(int, int)
     def open_conversation_from_table_cell(self, row, col):
@@ -1598,30 +1606,71 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         logging.info('Starting FTP server...')
         self.ftpServerThread = ftp.FtpServer(address, port, max_connections, max_connections_per_ip, folder, banner,
                                              users_can_upload_files)
+
         self.ftpServerThread.signals.on_start.connect(self.ftp_server_on_start)
         self.ftpServerThread.signals.on_shutdown.connect(self.ftp_server_on_shutdown)
         self.ftpServerThread.signals.on_error.connect(self.ftp_server_on_error)
         self.ftpServerThread.signals.on_connect.connect(self.ftp_server_on_connect)
         self.ftpServerThread.signals.on_disconnect.connect(self.ftp_server_on_disconnect)
+
+        self.ftpServerThread.signals.on_login.connect(self.ftp_server_on_login)
+        self.ftpServerThread.signals.on_logout.connect(self.ftp_server_on_logout)
+        self.ftpServerThread.signals.on_file_received.connect(self.ftp_server_on_file_received)
+        self.ftpServerThread.signals.on_incomplete_file_received.connect(self.ftp_server_on_incomplete_file_received)
+
+        self.ftpServerThread.signals.on_file_sent.connect(self.ftp_server_on_file_sent)
+        self.ftpServerThread.signals.on_incomplete_file_sent.connect(self.ftp_server_on_incomplete_file_sent)
+
         self.threadPool.start(self.ftpServerThread)
 
     def ftpShutdownPushButtonAction(self):
-        logging.info('Shutting down the server')
+        logging.info('Shutting down the FTP server...')
         self.ftpServerThread.my_jorge_shutdown()
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_incomplete_file_received(self, remote_ip, remote_port, filename):
+        logging.info(f"{remote_ip}:{remote_port} could not upload '{filename}'")
+        self.addNotificationToNotificationsTable(f"{remote_ip}:{remote_port} could not upload '{filename}', removing the uploaded part")
+        os.remove(filename)  # TODO: Do this in a separate thread
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_incomplete_file_sent(self, remote_ip, remote_port, filename):
+        logging.info(f"{remote_ip}:{remote_port} could not download '{filename}'")
+        self.addNotificationToNotificationsTable(f"{remote_ip}:{remote_port} could not download '{filename}'")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_file_received(self, remote_ip, remote_port, filename):
+        logging.info(f"{remote_ip}:{remote_port} uploaded '{filename}'")
+        self.loadFtpFilesTable()
+        self.addNotificationToNotificationsTable(f"{remote_ip}:{remote_port} uploaded '{filename}'")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_file_sent(self, remote_ip, remote_port, filename):
+        logging.info(f"{remote_ip}:{remote_port} downloaded '{filename}'")
+        self.addNotificationToNotificationsTable(f"{remote_ip}:{remote_port} downloaded '{filename}'")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_login(self, remote_ip, remote_port, username):
+        logging.info(f"The FTP user '{username}' ({remote_ip}:{remote_port}) has logged in")
+        self.addNotificationToNotificationsTable(f"The FTP user '{username}' ({remote_ip}:{remote_port}) has logged in")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def ftp_server_on_logout(self, remote_ip, remote_port, username):
+        logging.info(f"The FTP user '{username}' ({remote_ip}:{remote_port}) has logged out")
+        self.addNotificationToNotificationsTable(
+            f"The FTP user '{username}' ({remote_ip}:{remote_port}) has logged out")
 
     @QtCore.pyqtSlot(str, int)
     def ftp_server_on_connect(self, remote_ip, remote_port):
-        logging.info(f'New connection brother = {remote_ip}:{remote_port}')
         self.addUserToFtpConnectedUsersTable(remote_ip, remote_port)
-
+        self.addNotificationToNotificationsTable(f"New FTP connection from {remote_ip}:{remote_port}")
 
     @QtCore.pyqtSlot(str, int)
     def ftp_server_on_disconnect(self, remote_ip, remote_port):
-        logging.info(f'New disconnection brother = {remote_ip}:{remote_port}')
         self.removeUserToFtpConnectedUsersTable(remote_ip)
+        self.addNotificationToNotificationsTable(f"FTP client {remote_ip}:{remote_port} disconnected")
 
     def addUserToFtpConnectedUsersTable(self, ip, port):
-        print(f"ip= {ip} port={port}")
         row = self.ftpConnectedUsersTableWidget.rowCount()
         self.ftpConnectedUsersTableWidget.insertRow(row)
         item = QtWidgets.QTableWidgetItem(ip)
@@ -1639,7 +1688,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot()
     def ftp_server_on_start(self):
-        logging.info('FTP Server started')
         self.ftpPortSpinBox.setEnabled(False)
         self.ftpMaxConnectionsSpinBox.setEnabled(False)
         self.ftpMaxConnectionsPerIPSpinBox.setEnabled(False)
@@ -1648,9 +1696,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.ftpUsersCanUploadFilesCheckBox.setEnabled(False)
         self.ftpStartPushButton.setEnabled(False)
         self.ftpShutdownPushButton.setEnabled(True)
+        self.addNotificationToNotificationsTable("The FTP server is running")
+        logging.info('The FTP server is running')
 
     def ftp_server_on_shutdown(self):
-        logging.info('FTP Server shutdown')
         self.ftpPortSpinBox.setEnabled(True)
         self.ftpMaxConnectionsSpinBox.setEnabled(True)
         self.ftpMaxConnectionsPerIPSpinBox.setEnabled(True)
@@ -1659,6 +1708,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.ftpUsersCanUploadFilesCheckBox.setEnabled(True)
         self.ftpStartPushButton.setEnabled(True)
         self.ftpShutdownPushButton.setEnabled(False)
+        while self.ftpConnectedUsersTableWidget.rowCount():
+            self.ftpConnectedUsersTableWidget.removeRow(0)
+        self.addNotificationToNotificationsTable("The FTP server was shutted down")
+        logging.info('The FTP server was shutted down')
 
     @QtCore.pyqtSlot('PyQt_PyObject')
     def ftp_server_on_error(self, ex):
@@ -1687,3 +1740,23 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             logging.info("Updating 'Downloads' tab")
         elif index == 5:
             logging.info("Updating 'Notifications' tab")
+            self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications")
+
+    def setupNotificationsTable(self):
+        tableHeaders = ['Time', 'Notification']
+        self.notificationsTableWidget.setColumnCount(len(tableHeaders))
+        self.notificationsTableWidget.setHorizontalHeaderLabels(tableHeaders)
+        self.notificationsTableWidget.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.notificationsTableWidget.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        hHeader = self.notificationsTableWidget.horizontalHeader()
+        hHeader.setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        hHeader.setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+
+    def addNotificationToNotificationsTable(self, notification, time=None):
+        if not time:
+            time = datetime.datetime.now()
+        row = self.notificationsTableWidget.rowCount()
+        self.notificationsTableWidget.insertRow(row)
+        self.notificationsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(time.strftime('%b %d %Y %I:%M %p')))
+        self.notificationsTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(notification))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications*")
