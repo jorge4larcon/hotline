@@ -47,6 +47,19 @@ def running_as_a_python_process():
         return True
 
 
+def generate_ipv6_linklocal_eui64_address(mac_address: str):
+    parts = [mac_address[:2], mac_address[2:4], mac_address[5:7], mac_address[7:9], mac_address[10:12],
+             mac_address[12:]]
+    parts.insert(3, "ff")
+    parts.insert(4, "fe")
+    parts[0] = "%x" % (int(parts[0], 16) ^ 2)
+    ipv6Parts = []
+    for i in range(0, len(parts), 2):
+        ipv6Parts.append("".join(parts[i:i + 2]))
+    ipv6 = "fe80::%s" % (":".join(ipv6Parts))
+    return ipv6
+
+
 def ipv4_address():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

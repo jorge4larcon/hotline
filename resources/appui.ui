@@ -1188,12 +1188,12 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_11">
            <item>
-            <widget class="QTabWidget" name="tabWidget_2">
+            <widget class="QTabWidget" name="downloadsTabWidget">
              <property name="tabPosition">
               <enum>QTabWidget::South</enum>
              </property>
              <property name="currentIndex">
-              <number>1</number>
+              <number>-1</number>
              </property>
              <property name="tabsClosable">
               <bool>true</bool>
@@ -1201,16 +1201,6 @@
              <property name="movable">
               <bool>true</bool>
              </property>
-             <widget class="QWidget" name="tab_1">
-              <attribute name="title">
-               <string>192.168.1.70</string>
-              </attribute>
-             </widget>
-             <widget class="QWidget" name="tab_2">
-              <attribute name="title">
-               <string>Tab 2</string>
-              </attribute>
-             </widget>
             </widget>
            </item>
           </layout>
@@ -1286,7 +1276,7 @@
   <tabstop>ftpConnectedUsersTableWidget</tabstop>
   <tabstop>ftpFilesTableWidget</tabstop>
   <tabstop>interSearchCriteriaComboBox</tabstop>
-  <tabstop>tabWidget_2</tabstop>
+  <tabstop>downloadsTabWidget</tabstop>
   <tabstop>notificationsTableWidget</tabstop>
  </tabstops>
  <resources/>

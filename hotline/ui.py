@@ -24,6 +24,54 @@ import valid
 import sqlite3
 import ftp
 import datetime
+import configuration
+
+
+class FtpClientTabWidget(QtWidgets.QWidget):
+    def __init__(self, *args, **kwargs):
+        super(FtpClientTabWidget, self).__init__(*args, **kwargs)
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.innerLayout = QtWidgets.QVBoxLayout()
+
+        self.topWindowFieldsLayout = QtWidgets.QFormLayout()
+        self.serverBannerLabel = QtWidgets.QLabel(self)
+        self.serverBannerLabel.setText("Server banner:")
+        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.serverBannerLabel)
+        self.serverBannerLineEdit = QtWidgets.QLineEdit(self)
+        self.serverBannerLineEdit.setReadOnly(True)
+        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.serverBannerLineEdit)
+
+        self.currentFolderLabel = QtWidgets.QLabel(self)
+        self.currentFolderLabel.setText("Current folder:")
+        self.topWindowFieldsLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.currentFolderLabel)
+        self.currentFolderLineEdit = QtWidgets.QLineEdit(self)
+        self.currentFolderLineEdit.setReadOnly(True)
+        self.topWindowFieldsLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.currentFolderLineEdit)
+        self.innerLayout.addLayout(self.topWindowFieldsLayout)
+
+        self.ftpServerFilesTableWidget = QtWidgets.QTableWidget(self)
+        self.ftpServerFilesTableWidget.setColumnCount(0)
+        self.ftpServerFilesTableWidget.setRowCount(0)
+        self.innerLayout.addWidget(self.ftpServerFilesTableWidget)
+
+        self.optionsLayout = QtWidgets.QHBoxLayout()
+        self.goBackPushButton = QtWidgets.QPushButton(self)
+        self.goBackPushButton.setText("Go back")
+        self.optionsLayout.addWidget(self.goBackPushButton)
+
+        buttonsSpacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.optionsLayout.addItem(buttonsSpacer)
+
+        self.uploadPushButton = QtWidgets.QPushButton(self)
+        self.uploadPushButton.setText("Upload file")
+        self.optionsLayout.addWidget(self.uploadPushButton)
+
+        self.refreshPushButton = QtWidgets.QPushButton(self)
+        self.refreshPushButton.setText("Refresh")
+        self.optionsLayout.addWidget(self.refreshPushButton)
+
+        self.innerLayout.addLayout(self.optionsLayout)
+        self.verticalLayout.addLayout(self.innerLayout)
 
 
 class Ui_HotlineMainWindow(object):
@@ -595,18 +643,12 @@ class Ui_HotlineMainWindow(object):
         self.groupBox_4.setObjectName("groupBox_4")
         self.verticalLayout_11 = QtWidgets.QVBoxLayout(self.groupBox_4)
         self.verticalLayout_11.setObjectName("verticalLayout_11")
-        self.tabWidget_2 = QtWidgets.QTabWidget(self.groupBox_4)
-        self.tabWidget_2.setTabPosition(QtWidgets.QTabWidget.South)
-        self.tabWidget_2.setTabsClosable(True)
-        self.tabWidget_2.setMovable(True)
-        self.tabWidget_2.setObjectName("tabWidget_2")
-        self.tab_1 = QtWidgets.QWidget()
-        self.tab_1.setObjectName("tab_1")
-        self.tabWidget_2.addTab(self.tab_1, "")
-        self.tab_2 = QtWidgets.QWidget()
-        self.tab_2.setObjectName("tab_2")
-        self.tabWidget_2.addTab(self.tab_2, "")
-        self.verticalLayout_11.addWidget(self.tabWidget_2)
+        self.downloadsTabWidget = QtWidgets.QTabWidget(self.groupBox_4)
+        self.downloadsTabWidget.setTabPosition(QtWidgets.QTabWidget.South)
+        self.downloadsTabWidget.setTabsClosable(True)
+        self.downloadsTabWidget.setMovable(True)
+        self.downloadsTabWidget.setObjectName("downloadsTabWidget")
+        self.verticalLayout_11.addWidget(self.downloadsTabWidget)
         self.verticalLayout_12.addWidget(self.groupBox_4)
         self.tabWidget.addTab(self.tabDownloads, "")
         self.tabNotifications = QtWidgets.QWidget()
@@ -632,7 +674,7 @@ class Ui_HotlineMainWindow(object):
 
         self.retranslateUi(HotlineMainWindow)
         self.tabWidget.setCurrentIndex(0)
-        self.tabWidget_2.setCurrentIndex(1)
+        self.downloadsTabWidget.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(HotlineMainWindow)
         HotlineMainWindow.setTabOrder(self.chatMateFilesPushButton, self.chatMateAddToContactsPushButton)
         HotlineMainWindow.setTabOrder(self.chatMateAddToContactsPushButton, self.ftpIpAddressLineEdit)
@@ -675,8 +717,8 @@ class Ui_HotlineMainWindow(object):
         HotlineMainWindow.setTabOrder(self.ftpFolderLineEdit, self.ftpConnectedUsersTableWidget)
         HotlineMainWindow.setTabOrder(self.ftpConnectedUsersTableWidget, self.ftpFilesTableWidget)
         HotlineMainWindow.setTabOrder(self.ftpFilesTableWidget, self.interSearchCriteriaComboBox)
-        HotlineMainWindow.setTabOrder(self.interSearchCriteriaComboBox, self.tabWidget_2)
-        HotlineMainWindow.setTabOrder(self.tabWidget_2, self.notificationsTableWidget)
+        HotlineMainWindow.setTabOrder(self.interSearchCriteriaComboBox, self.downloadsTabWidget)
+        HotlineMainWindow.setTabOrder(self.downloadsTabWidget, self.notificationsTableWidget)
 
     def retranslateUi(self, HotlineMainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -749,9 +791,6 @@ class Ui_HotlineMainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabInterlocutor),
                                   _translate("HotlineMainWindow", "Interlocutor"))
         self.groupBox_4.setTitle(_translate("HotlineMainWindow", "My downloads"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_1),
-                                    _translate("HotlineMainWindow", "192.168.1.70"))
-        self.tabWidget_2.setTabText(self.tabWidget_2.indexOf(self.tab_2), _translate("HotlineMainWindow", "Tab 2"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabDownloads),
                                   _translate("HotlineMainWindow", "Downloads"))
         self.groupBox_5.setTitle(_translate("HotlineMainWindow", "My notifications"))
@@ -770,6 +809,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         self.threadPool = QtCore.QThreadPool()
         self.ftpServerThread = None
+        self.tabsOfFtpClients = []
 
         logging.info(f'max thread count = {self.threadPool.maxThreadCount()}')
 
@@ -781,9 +821,18 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.setupContactsTab()
         self.setupChatsTab()
         self.setupNotificationsTab()
+        self.setupDownloadsTab()
 
         if "err" in kwargs:
             self.addNotificationToNotificationsTable(kwargs["err"])
+
+    def setupDownloadsTab(self):
+        self.downloadsTabWidget.tabCloseRequested.connect(self.close_download_tab)
+
+    @QtCore.pyqtSlot(int)
+    def close_download_tab(self, index):
+        logging.info(f'Tab {index} closing')
+        self.downloadsTabWidget.removeTab(index)
 
     def setupChatsTab(self):
         self.setupConversationsTable()
@@ -876,6 +925,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     return
             else:
                 logging.info(f"New value '{new_value}' for field 'name' for user '{mac_address}'")
+                for row in range(self.conversationsTableWidget.rowCount()):
+                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == mac_address:
+                        self.conversationsTableWidget.item(row, 0).setText(f"{new_value}\n{mac_address}")
+
             finally:
                 conn.close()
         elif cell == 2:
@@ -1477,6 +1530,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
             files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
             files_btn.setText('Files')
+            files_btn.clicked.connect(self.start_ftp_client_connection)
             self.contactsTableWidget.setCellWidget(row, 7, files_btn)
             delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
             delete_btn.setText('Delete')
@@ -1486,15 +1540,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
     def addContactToContactsTable(self, name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port):
-        # if self.contactsTableWidget.rowCount() > 0:
-        #     for row in range(self.contactsTableWidget.rowCount()):
-        #         row_name = self.contactsTableWidget.item(row, 0).text()
-        #         if name < row_name:
-        #             break
-        #     else:
-        #         row += 1
-        # else:
-        #     row = 0
         row = self.contactsTableWidget.rowCount()
 
         try:
@@ -1529,6 +1574,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.contactsTableWidget.setCellWidget(row, 6, chat_btn)
         files_btn = QtWidgets.QPushButton(self.contactsTableWidget)
         files_btn.setText('Files')
+        files_btn.clicked.connect(self.start_ftp_client_connection)
         self.contactsTableWidget.setCellWidget(row, 7, files_btn)
         delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
         delete_btn.setText('Delete')
@@ -1536,6 +1582,34 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
 
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
+
+    @QtCore.pyqtSlot()
+    def start_ftp_client_connection(self):
+        btn = self.sender()
+        if btn:
+            row = self.contactsTableWidget.indexAt(btn.pos()).row()
+            ip = self.contactsTableWidget.item(row, 2).text() if self.contactsTableWidget.item(row,
+                                                                                               2).text() else self.contactsTableWidget.item(
+                row, 3).text()
+            if not ip:
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Question)
+                msg.setWindowTitle('Not enought information')
+                msg.setText("This user doesn't have an IP address")
+                msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+                answer = msg.exec_()
+                if answer == QtWidgets.QMessageBox.Yes:
+                    logging.info('User said yes to IPv6')
+                    mac_address = self.contactsTableWidget.item(row, 1).text()
+                    ipv6 = configuration.generate_ipv6_linklocal_eui64_address(mac_address)
+                    self.contactsTableWidget.item(row, 3).setText(ipv6)
+
+                    self.tabsOfFtpClients.append()
+
+                else:
+                    logging.info('User refused to use IPv6')
 
     @QtCore.pyqtSlot()
     def addNewContactPushButtonAction(self):
@@ -1630,7 +1704,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     @QtCore.pyqtSlot(str, int, str)
     def ftp_server_on_incomplete_file_received(self, remote_ip, remote_port, filename):
         logging.info(f"{remote_ip}:{remote_port} could not upload '{filename}'")
-        self.addNotificationToNotificationsTable(f"{remote_ip}:{remote_port} could not upload '{filename}', removing the uploaded part")
+        self.addNotificationToNotificationsTable(
+            f"{remote_ip}:{remote_port} could not upload '{filename}', removing the uploaded part")
         os.remove(filename)  # TODO: Do this in a separate thread
 
     @QtCore.pyqtSlot(str, int, str)
