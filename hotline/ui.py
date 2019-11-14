@@ -25,28 +25,25 @@ import sqlite3
 import ftp
 import datetime
 import configuration
+import task
+import ftplib
 
 
 class FtpClientTabWidget(QtWidgets.QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, ftp_conn: ftplib.FTP, container: QtWidgets.QTabBar, *args, **kwargs):
         super(FtpClientTabWidget, self).__init__(*args, **kwargs)
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.innerLayout = QtWidgets.QVBoxLayout()
-
+        self.ftp_conn = ftp_conn
         self.topWindowFieldsLayout = QtWidgets.QFormLayout()
-        self.serverBannerLabel = QtWidgets.QLabel(self)
-        self.serverBannerLabel.setText("Server banner:")
-        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.serverBannerLabel)
-        self.serverBannerLineEdit = QtWidgets.QLineEdit(self)
-        self.serverBannerLineEdit.setReadOnly(True)
-        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.serverBannerLineEdit)
-
+        self.container = container
         self.currentFolderLabel = QtWidgets.QLabel(self)
         self.currentFolderLabel.setText("Current folder:")
-        self.topWindowFieldsLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.currentFolderLabel)
+        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.currentFolderLabel)
         self.currentFolderLineEdit = QtWidgets.QLineEdit(self)
         self.currentFolderLineEdit.setReadOnly(True)
-        self.topWindowFieldsLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.currentFolderLineEdit)
+        self.currentFolderLineEdit.setText(self.ftp_conn.pwd())
+        self.topWindowFieldsLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.currentFolderLineEdit)
         self.innerLayout.addLayout(self.topWindowFieldsLayout)
 
         self.ftpServerFilesTableWidget = QtWidgets.QTableWidget(self)
@@ -57,6 +54,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         self.optionsLayout = QtWidgets.QHBoxLayout()
         self.goBackPushButton = QtWidgets.QPushButton(self)
         self.goBackPushButton.setText("Go back")
+        self.goBackPushButton.clicked.connect(self.goBackPushButtonAction)
         self.optionsLayout.addWidget(self.goBackPushButton)
 
         buttonsSpacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -72,6 +70,99 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
         self.innerLayout.addLayout(self.optionsLayout)
         self.verticalLayout.addLayout(self.innerLayout)
+        self.setupftpServerFilesTable()
+        self.loadDirContentInFtpServerFilesTable()
+
+    def setupftpServerFilesTable(self):
+        headers = ['File name', 'Type', 'Size', 'Actions']
+        self.ftpServerFilesTableWidget.setColumnCount(len(headers))
+        self.ftpServerFilesTableWidget.setHorizontalHeaderLabels(headers)
+        header = self.ftpServerFilesTableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
+
+    def loadDirContentInFtpServerFilesTable(self):
+
+        while self.ftpServerFilesTableWidget.rowCount():
+            self.ftpServerFilesTableWidget.removeRow(0)
+
+        try:
+            for filename, fileinfo in self.ftp_conn.mlsd():
+                row = self.ftpServerFilesTableWidget.rowCount()
+                self.ftpServerFilesTableWidget.insertRow(row)
+
+                item = QtWidgets.QTableWidgetItem(filename)
+                item.setFlags((item.flags() ^ QtCore.Qt.ItemIsEditable))
+                self.ftpServerFilesTableWidget.setItem(row, 0, item)
+
+                item = QtWidgets.QTableWidgetItem(fileinfo['type'])
+                item.setFlags((item.flags() ^ QtCore.Qt.ItemIsEditable))
+                self.ftpServerFilesTableWidget.setItem(row, 1, item)
+
+                item = QtWidgets.QTableWidgetItem(f"{fileinfo['size']} bytes")
+                item.setFlags((item.flags() ^ QtCore.Qt.ItemIsEditable))
+                self.ftpServerFilesTableWidget.setItem(row, 2, item)
+
+                if fileinfo['type'] == 'dir':
+                    open_button = QtWidgets.QPushButton(self)
+                    open_button.setText('Open folder')
+                    open_button.clicked.connect(self.change_folder)
+                    self.ftpServerFilesTableWidget.setCellWidget(row, 3, open_button)
+                else:
+                    download_button = QtWidgets.QPushButton(self)
+                    download_button.setText('Download file')
+                    self.ftpServerFilesTableWidget.setCellWidget(row, 3, download_button)
+
+        except Exception as e:
+            msg = QtWidgets.QMessageBox(self)
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setWindowTitle('Error')
+            msg.setText("The connection was interrumpted")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+            answer = msg.exec_()
+            self.erase_myself()
+
+    @QtCore.pyqtSlot()
+    def change_folder(self):
+        btn = self.sender()
+        if btn:
+            row = self.ftpServerFilesTableWidget.indexAt(btn.pos()).row()
+            dirname = self.ftpServerFilesTableWidget.item(row, 0).text()
+            try:
+                self.ftp_conn.cwd(dirname)
+                self.currentFolderLineEdit.setText(self.ftp_conn.pwd())
+                self.loadDirContentInFtpServerFilesTable()
+            except Exception as e:
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
+                msg.setWindowTitle('Error')
+                msg.setText("The connection was interrumpted")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                answer = msg.exec_()
+                self.erase_myself()
+
+    @QtCore.pyqtSlot()
+    def goBackPushButtonAction(self):
+        try:
+            self.ftp_conn.cwd('..')
+            self.currentFolderLineEdit.setText(self.ftp_conn.pwd())
+            self.loadDirContentInFtpServerFilesTable()
+        except Exception as e:
+            msg = QtWidgets.QMessageBox(self)
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setWindowTitle('Error')
+            msg.setText("The connection was interrumpted")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+            answer = msg.exec_()
+            self.erase_myself()
+
+    def erase_myself(self):
+        self.container.removeTab(self.container.currentIndex())
 
 
 class Ui_HotlineMainWindow(object):
@@ -809,7 +900,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         self.threadPool = QtCore.QThreadPool()
         self.ftpServerThread = None
-        self.tabsOfFtpClients = []
 
         logging.info(f'max thread count = {self.threadPool.maxThreadCount()}')
 
@@ -832,6 +922,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     @QtCore.pyqtSlot(int)
     def close_download_tab(self, index):
         logging.info(f'Tab {index} closing')
+        tab: FtpClientTabWidget = self.downloadsTabWidget.widget(index)
+        try:
+            tab.ftp_conn.quit()
+        except Exception as e:
+            logging.error(e)
+
         self.downloadsTabWidget.removeTab(index)
 
     def setupChatsTab(self):
@@ -1591,6 +1687,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             ip = self.contactsTableWidget.item(row, 2).text() if self.contactsTableWidget.item(row,
                                                                                                2).text() else self.contactsTableWidget.item(
                 row, 3).text()
+            port = self.contactsTableWidget.cellWidget(row, 5).value()
             if not ip:
                 msg = QtWidgets.QMessageBox(self)
                 msg.setIcon(QtWidgets.QMessageBox.Question)
@@ -1605,11 +1702,93 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     mac_address = self.contactsTableWidget.item(row, 1).text()
                     ipv6 = configuration.generate_ipv6_linklocal_eui64_address(mac_address)
                     self.contactsTableWidget.item(row, 3).setText(ipv6)
-
-                    self.tabsOfFtpClients.append()
+                    gcir = task.GetContactInformationThread(ipv6, 42000, 3)
+                    gcir.signals.on_finished.connect(self.getContactInfoForFtpConnectionOnFinished)
+                    gcir.signals.on_result.connect(self.getContactInfoForFtpConnectionOnResult)
+                    gcir.signals.on_error.connect(self.getContactInfoForFtpConnectionOnError)
+                    self.threadPool.start(gcir)
+                    logging.info('GetContactInformation started')
 
                 else:
                     logging.info('User refused to use IPv6')
+                    msg = QtWidgets.QMessageBox(
+                        QtWidgets.QMessageBox.Critical,
+                        'Error',
+                        f"Cannot start FTP connection because the contact has not an IP address",
+                        QtWidgets.QMessageBox.Ok
+                    )
+                    answer = msg.exec_()
+            else:
+                self.startFtpClientConnection(ip, port)
+
+    @QtCore.pyqtSlot()
+    def getContactInfoForFtpConnectionOnFinished(self):
+        logging.info('GetContactInformation request finished')
+
+    @QtCore.pyqtSlot(str, int)
+    def getContactInfoForFtpConnectionOnError(self, ip, port):
+        logging.info(f'GetContactInformation request error')
+        msg = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Critical,
+            'Error',
+            f"Could not get enought network information to connect with {ip}:{port}",
+            QtWidgets.QMessageBox.Ok
+        )
+        answer = msg.exec_()
+
+    @QtCore.pyqtSlot(str)
+    def getContactInfoForFtpConnectionOnResult(self, info):
+        logging.info(f"GetContactInformation request result: {info}")
+        mac_address = info['mac_address']
+        for row in range(self.contactsTableWidget.rowCount()):
+            if self.contactsTableWidget.item(row, 1).text() == mac_address:
+                self.contactsTableWidget.item(row, 2).setText(info['ipv4_address'])
+                self.contactsTableWidget.cellWidget(row, 4).setValue(info['inbox_port'])
+                self.contactsTableWidget.cellWidget(row, 5).setValue(info['ftp_port'])
+                self.startFtpClientConnection(info['ipv4_address'], info['ftp_port'])
+                return
+
+    def startFtpClientConnection(self, ip, port, timeout=3):
+        logging.info(f"Starting FTP client connection with {ip}:{port}")
+        startFtpThread = task.StartFtpClientConnectionThread(ip, port, timeout)
+        startFtpThread.signals.on_connect.connect(self.startFtpClientConnectionOnConnect)
+        startFtpThread.signals.on_finished.connect(self.startFtpClientConnectionOnFinished)
+        startFtpThread.signals.on_result.connect(self.startFtpClientConnectionOnResult)
+        startFtpThread.signals.on_error.connect(self.startFtpClientConnectionOnError)
+        self.threadPool.start(startFtpThread)
+
+    @QtCore.pyqtSlot(str)
+    def startFtpClientConnectionOnConnect(self, banner):
+        logging.info(f'FTP client connection made: {banner}')
+
+    @QtCore.pyqtSlot('PyQt_PyObject')
+    def startFtpClientConnectionOnResult(self, ftp_conn):
+        logging.info(f'Succesfully FTP client login')
+        self.addFtpClientToDownloadsTab(ftp_conn)
+
+        self.tabWidget.setCurrentIndex(4)
+        self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count())
+
+        # msg = QtWidgets.QMessageBox(self)
+        # msg.setIcon(QtWidgets.QMessageBox.Information)
+        # msg.setWindowTitle('FTP connection established')
+        # msg.setText("This user doesn't have an IP address")
+        # msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
+        # msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        # msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+        # answer = msg.exec_()
+
+    def addFtpClientToDownloadsTab(self, ftp_conn: ftplib.FTP):
+        newDownloadTab = FtpClientTabWidget(ftp_conn, self.downloadsTabWidget)
+        self.downloadsTabWidget.addTab(newDownloadTab, f"{ftp_conn.host}:{ftp_conn.port}")
+
+    @QtCore.pyqtSlot(str, int)
+    def startFtpClientConnectionOnError(self, ip, port):
+        logging.error(f"Could not FTP client connect with {ip}:{port}")
+
+    @QtCore.pyqtSlot()
+    def startFtpClientConnectionOnFinished(self):
+        logging.info(f"FTP Client connection finished")
 
     @QtCore.pyqtSlot()
     def addNewContactPushButtonAction(self):
@@ -1832,6 +2011,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             time = datetime.datetime.now()
         row = self.notificationsTableWidget.rowCount()
         self.notificationsTableWidget.insertRow(row)
-        self.notificationsTableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem(time.strftime('%b %d %Y %I:%M %p')))
-        self.notificationsTableWidget.setItem(row, 1, QtWidgets.QTableWidgetItem(notification))
+        item = QtWidgets.QTableWidgetItem(time.strftime('%b %d %Y %I:%M %p'))
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.notificationsTableWidget.setItem(row, 0, item)
+        item = QtWidgets.QTableWidgetItem(notification)
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.notificationsTableWidget.setItem(row, 1, item)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications*")

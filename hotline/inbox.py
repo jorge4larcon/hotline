@@ -56,37 +56,75 @@ def parse_request(raw_request: bytes):
         return request
 
 
+# async def get_contact_information(ip_address, port=42000, timeout=3):
+#     try:
+#         reader, writer = await asyncio.wait_for(asyncio.open_connection(ip_address, port), timeout)
+#         request = '{"subject":"get_contact_information"}'.encode('UTF-8')
+#         writer.write(request)
+#         await writer.drain()
+#         data = await asyncio.wait_for(reader.read(MAX_BYTES), timeout)
+#         reply = data.decode('UTF-8')
+#         json_contact = json.loads(reply)
+#         address, family = address_and_family(writer)
+#         contact = {
+#             'name': json_contact['name'],
+#             'mac_address': json_contact['mac_address'],
+#             'ipv4_address': json_contact['ipv4_address'],
+#             'ipv6_address': json_contact['ipv6_address'],
+#             'inbox_port': json_contact['inbox_port'],
+#             'ftp_port': json_contact['ftp_port']
+#         }
+#         if address:
+#             if family == socket.AF_INET:
+#                 json_contact['ipv4_address'] = address
+#             elif family == socket.AF_INET6:
+#                 json_contact['ipv6_address'] = address
+#
+#     except Exception:
+#         raise
+#     else:
+#         return contact
+#     finally:
+#         writer.close()
+#         await writer.wait_closed()
+
+
 async def get_contact_information(ip_address, port=42000, timeout=3):
     try:
         reader, writer = await asyncio.wait_for(asyncio.open_connection(ip_address, port), timeout)
-        request = '{"subject":"get_contact_information"}'.encode('UTF-8')
-        writer.write(request)
-        await writer.drain()
-        data = await asyncio.wait_for(reader.read(MAX_BYTES), timeout)
-        reply = data.decode('UTF-8')
-        json_contact = json.loads(reply)
-        address, family = address_and_family(writer)
-        contact = {
-            'name': json_contact['name'],
-            'mac_address': json_contact['mac_address'],
-            'ipv4_address': json_contact['ipv4_address'],
-            'ipv6_address': json_contact['ipv6_address'],
-            'inbox_port': json_contact['inbox_port'],
-            'ftp_port': json_contact['ftp_port']
-        }
-        if address:
-            if family == socket.AF_INET:
-                json_contact['ipv4_address'] = address
-            elif family == socket.AF_INET6:
-                json_contact['ipv6_address'] = address
+        try:
+            request = '{"subject":"get_contact_information"}'.encode('UTF-8')
+            writer.write(request)
+            await writer.drain()
+            data = await asyncio.wait_for(reader.read(MAX_BYTES), timeout)
+            reply = data.decode('UTF-8')
+            json_contact = json.loads(reply)
+            address, family = address_and_family(writer)
+            contact = {
+                'name': json_contact['name'],
+                'mac_address': json_contact['mac_address'],
+                'ipv4_address': json_contact['ipv4_address'],
+                'ipv6_address': json_contact['ipv6_address'],
+                'inbox_port': json_contact['inbox_port'],
+                'ftp_port': json_contact['ftp_port']
+            }
+            if address:
+                if family == socket.AF_INET:
+                    json_contact['ipv4_address'] = address
+                elif family == socket.AF_INET6:
+                    json_contact['ipv6_address'] = address
+        except Exception as e:
+            raise e
+        else:
+            return contact
+        finally:
+            writer.close()
+            await writer.wait_closed()
 
-    except Exception:
-        raise
-    else:
-        return contact
-    finally:
-        writer.close()
-        await writer.wait_closed()
+    except asyncio.TimeoutError as e:
+        raise e
+    except Exception as e:
+        raise e
 
 
 async def message_to(ip_address, sender, sent_timestamp, content, receiver, port=42000, timeout=3):
