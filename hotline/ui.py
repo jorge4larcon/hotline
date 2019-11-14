@@ -27,14 +27,19 @@ import datetime
 import configuration
 import task
 import ftplib
+import knownpaths
 
 
 class FtpClientTabWidget(QtWidgets.QWidget):
-    def __init__(self, ftp_conn: ftplib.FTP, container: QtWidgets.QTabBar, *args, **kwargs):
+    def __init__(self, ftp_conn: ftplib.FTP, container: QtWidgets.QTabBar, thread_pool: QtCore.QThreadPool,
+                 notificationsTable: QtWidgets.QTableWidget, tabWidget: QtWidgets.QTabBar, *args, **kwargs):
         super(FtpClientTabWidget, self).__init__(*args, **kwargs)
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.innerLayout = QtWidgets.QVBoxLayout()
         self.ftp_conn = ftp_conn
+        self.thread_pool = thread_pool
+        self.notificationsTableWidget = notificationsTable
+        self.tabWidget = tabWidget
         self.topWindowFieldsLayout = QtWidgets.QFormLayout()
         self.container = container
         self.currentFolderLabel = QtWidgets.QLabel(self)
@@ -62,6 +67,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
         self.uploadPushButton = QtWidgets.QPushButton(self)
         self.uploadPushButton.setText("Upload file")
+        self.uploadPushButton.clicked.connect(self.uploadPushButtonAction)
         self.optionsLayout.addWidget(self.uploadPushButton)
 
         self.refreshPushButton = QtWidgets.QPushButton(self)
@@ -83,8 +89,36 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
         header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
 
-    def loadDirContentInFtpServerFilesTable(self):
+    @QtCore.pyqtSlot()
+    def uploadPushButtonAction(self):
+        filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Select a file to upload',
+                                                         knownpaths.get_path(knownpaths.FOLDERID.Documents,
+                                                                             knownpaths.UserHandle.current))[0]
+        if not os.path.isfile(filename):
+            return
+        logging.info(f"Filen selected: '{filename}'")
+        uploader = task.UploadFileThread(filename, self.ftp_conn)
+        uploader.signals.on_start.connect(self.uploadFileOnStart)
+        uploader.signals.on_error.connect(self.uploadFileOnError)
+        uploader.signals.on_finished.connect(self.uploadFileOnFinished)
+        self.thread_pool.start(uploader)
 
+    @QtCore.pyqtSlot(str, int, str)
+    def uploadFileOnStart(self, ip, port, filename):
+        logging.info(f"Uploading '{filename}' to {ip}:{port}")
+        self.addNotificationToNotificationsTable(f"Uploading '{filename}' to {ip}:{port}")
+
+    @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
+    def uploadFileOnError(self, ip, port, filename, e):
+        logging.info(f"Could not upload '{filename}' to {ip}:{port} error: {e}")
+        self.addNotificationToNotificationsTable(f"Could not upload '{filename}' to {ip}:{port} error: {e}")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def uploadFileOnFinished(self, ip, port, filename):
+        logging.info(f"'{filename}' was uploaded to {ip}:{port}")
+        self.addNotificationToNotificationsTable(f"'{filename}' was uploaded to {ip}:{port}")
+
+    def loadDirContentInFtpServerFilesTable(self):
         while self.ftpServerFilesTableWidget.rowCount():
             self.ftpServerFilesTableWidget.removeRow(0)
 
@@ -163,6 +197,19 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     def erase_myself(self):
         self.container.removeTab(self.container.currentIndex())
+
+    def addNotificationToNotificationsTable(self, notification, time=None):
+        if not time:
+            time = datetime.datetime.now()
+        row = self.notificationsTableWidget.rowCount()
+        self.notificationsTableWidget.insertRow(row)
+        item = QtWidgets.QTableWidgetItem(time.strftime('%b %d %Y %I:%M %p'))
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.notificationsTableWidget.setItem(row, 0, item)
+        item = QtWidgets.QTableWidgetItem(notification)
+        item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+        self.notificationsTableWidget.setItem(row, 1, item)
+        self.tabWidget.setTabText(5, "Notifications*")
 
 
 class Ui_HotlineMainWindow(object):
@@ -1767,6 +1814,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.addFtpClientToDownloadsTab(ftp_conn)
 
         self.tabWidget.setCurrentIndex(4)
+
+        ######## BUG
+
         self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count())
 
         # msg = QtWidgets.QMessageBox(self)
@@ -1779,7 +1829,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         # answer = msg.exec_()
 
     def addFtpClientToDownloadsTab(self, ftp_conn: ftplib.FTP):
-        newDownloadTab = FtpClientTabWidget(ftp_conn, self.downloadsTabWidget)
+        newDownloadTab = FtpClientTabWidget(ftp_conn, self.downloadsTabWidget, self.threadPool,
+                                            self.notificationsTableWidget, self.tabWidget)
         self.downloadsTabWidget.addTab(newDownloadTab, f"{ftp_conn.host}:{ftp_conn.port}")
 
     @QtCore.pyqtSlot(str, int)

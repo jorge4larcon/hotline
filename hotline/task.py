@@ -2,6 +2,7 @@ from PyQt5 import QtCore
 import inbox
 import asyncio
 import ftplib
+import os
 
 
 # def recvall(sock: socket.socket, length):
@@ -64,3 +65,30 @@ class StartFtpClientConnectionThread(QtCore.QRunnable):
             self.signals.on_result.emit(ftp)
         finally:
             self.signals.on_finished.emit()
+
+
+class UploadFileSignals(QtCore.QObject):
+    # host, port, filename
+    on_start = QtCore.pyqtSignal(str, int, str)
+    # host, port, filename, exception
+    on_error = QtCore.pyqtSignal(str, int, str, 'PyQt_PyObject')
+    # host, port, filename
+    on_finished = QtCore.pyqtSignal(str, int, str)
+
+
+class UploadFileThread(QtCore.QRunnable):
+    def __init__(self, filename, ftp_conn: ftplib.FTP):
+        super(UploadFileThread, self).__init__()
+        self.filename = filename
+        self.ftp_conn = ftp_conn
+        self.signals = UploadFileSignals()
+
+    def run(self):
+        try:
+            with open(self.filename, 'rb') as f:
+                self.signals.on_start.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+                self.ftp_conn.storbinary(f"STOR {os.path.split(self.filename)[1]}", f)
+        except Exception as e:
+            self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
+        else:
+            self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
