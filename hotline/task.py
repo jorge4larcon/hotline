@@ -92,3 +92,33 @@ class UploadFileThread(QtCore.QRunnable):
             self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
         else:
             self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+
+
+class DownloadFileSignals(QtCore.QObject):
+    # host, port, filename
+    on_start = QtCore.pyqtSignal(str, int, str)
+    # host, port, filename, exception
+    on_error = QtCore.pyqtSignal(str, int, str, 'PyQt_PyObject')
+    # host, port, filename
+    on_finished = QtCore.pyqtSignal(str, int, str)
+
+
+class DownloadFileThread(QtCore.QRunnable):
+    def __init__(self, filename, ftp_conn: ftplib.FTP, folder_to_save):
+        super(DownloadFileThread, self).__init__()
+        self.filename = filename
+        self.ftp_conn = ftp_conn
+        self.folder_to_save = folder_to_save
+        self.signals = DownloadFileSignals()
+
+    def run(self) -> None:
+        try:
+            self.signals.on_start.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+            # self.filename = f"{self.ftp_conn.pwd()}/{self.filename}"
+            filepath = os.path.join(self.folder_to_save, self.filename)
+            with open(filepath, 'wb') as fp:
+                self.ftp_conn.retrbinary(f'RETR {os.path.split(self.filename)[1]}', fp.write)
+        except Exception as e:
+            self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
+        else:
+            self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)

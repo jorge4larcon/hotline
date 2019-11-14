@@ -72,6 +72,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
         self.refreshPushButton = QtWidgets.QPushButton(self)
         self.refreshPushButton.setText("Refresh")
+        self.refreshPushButton.clicked.connect(self.refreshPushButtonAction)
         self.optionsLayout.addWidget(self.refreshPushButton)
 
         self.innerLayout.addLayout(self.optionsLayout)
@@ -147,6 +148,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
                 else:
                     download_button = QtWidgets.QPushButton(self)
                     download_button.setText('Download file')
+                    download_button.clicked.connect(self.downloadPushButtonAction)
                     self.ftpServerFilesTableWidget.setCellWidget(row, 3, download_button)
 
         except Exception as e:
@@ -178,6 +180,42 @@ class FtpClientTabWidget(QtWidgets.QWidget):
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
                 self.erase_myself()
+
+    @QtCore.pyqtSlot()
+    def refreshPushButtonAction(self):
+        self.loadDirContentInFtpServerFilesTable()
+
+    @QtCore.pyqtSlot()
+    def downloadPushButtonAction(self):
+        btn = self.sender()
+        if btn:
+            row = self.ftpServerFilesTableWidget.indexAt(btn.pos()).row()
+            filename = self.ftpServerFilesTableWidget.item(row, 0).text()
+
+            download_dir = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to save the file')
+            if not os.path.isdir(download_dir):
+                return
+
+            downloadThread = task.DownloadFileThread(filename, self.ftp_conn, download_dir)
+            downloadThread.signals.on_start.connect(self.downloadFileOnStart)
+            downloadThread.signals.on_error.connect(self.downloadFileOnError)
+            downloadThread.signals.on_finished.connect(self.downloadFileOnFinished)
+            self.thread_pool.start(downloadThread)
+
+    @QtCore.pyqtSlot(str, int, str)
+    def downloadFileOnStart(self, ip, port, filename):
+        logging.info(f"Downloading '{filename}' from {ip}:{port}")
+        self.addNotificationToNotificationsTable(f"Downloading '{filename}' from {ip}:{port}")
+
+    @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
+    def downloadFileOnError(self, ip, port, filename, e):
+        logging.info(f"Could not download '{filename}' from {ip}:{port} error: {e}")
+        self.addNotificationToNotificationsTable(f"Could not download '{filename}' from {ip}:{port} error: {e}")
+
+    @QtCore.pyqtSlot(str, int, str)
+    def downloadFileOnFinished(self, ip, port, filename):
+        logging.info(f"'{filename}' was downloaded from {ip}:{port}")
+        self.addNotificationToNotificationsTable(f"'{filename}' was downloaded from {ip}:{port}")
 
     @QtCore.pyqtSlot()
     def goBackPushButtonAction(self):
@@ -1817,7 +1855,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
         ######## BUG
 
-        self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count())
+        # self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count())
 
         # msg = QtWidgets.QMessageBox(self)
         # msg.setIcon(QtWidgets.QMessageBox.Information)
@@ -1832,6 +1870,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         newDownloadTab = FtpClientTabWidget(ftp_conn, self.downloadsTabWidget, self.threadPool,
                                             self.notificationsTableWidget, self.tabWidget)
         self.downloadsTabWidget.addTab(newDownloadTab, f"{ftp_conn.host}:{ftp_conn.port}")
+        print('Tab count=', self.downloadsTabWidget.count())
+        self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count() - 1)
 
     @QtCore.pyqtSlot(str, int)
     def startFtpClientConnectionOnError(self, ip, port):

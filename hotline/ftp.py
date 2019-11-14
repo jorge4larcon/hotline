@@ -87,7 +87,12 @@ class FtpServer(QtCore.QRunnable):
         handler.authorizer = authorizer
         self.handler = handler
         self.handler.signals = self.signals
-        self.server = FTPServer((self.ip, self.port), handler)
+        try:
+            self.server = FTPServer((self.ip, self.port), handler)
+        except Exception as e:
+            self.signals.on_error.emit(e)
+            return
+
         self.server.max_cons = self.max_connections
         self.server.max_cons_per_ip = self.max_connections_per_ip
         # server = FTPServer((self.ip, self.port), handler)
