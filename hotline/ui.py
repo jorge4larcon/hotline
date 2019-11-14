@@ -1040,6 +1040,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
         self.loadInterlocutorConfiguration()
+        self.interSignUpPushButton.clicked.connect(self.interSignUpPushButtonAction)
 
     def setupNotificationsTab(self):
         self.setupNotificationsTable()
@@ -2109,3 +2110,43 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
         self.notificationsTableWidget.setItem(row, 1, item)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications*")
+
+    @QtCore.pyqtSlot()
+    def interSignUpPushButtonAction(self):
+        server_address = self.interIpAddressLineEdit.text()
+        server_port = self.interPortSpinBox.value()
+        server_password = self.interPasswordLineEdit.text()
+
+        mac = self.myContactInfoMacAddressLineEdit.text()
+        name = self.myContactInfoNameLineEdit.text()
+        getonlybymac = self.myContactInfoGetOnlyByMacCheckBox.isChecked()
+        port = self.myContactInfoInboxPortSpinBox.value()
+
+        signUpThread = task.SignUpRequestThread(
+            server_address, server_port, server_password, mac, name, port, getonlybymac
+        )
+        signUpThread.signals.on_start.connect(self.signupOnStart)
+        signUpThread.signals.on_result.connect(self.signupOnResult)
+        signUpThread.signals.on_error.connect(self.signupOnError)
+        self.threadPool.start(signUpThread)
+
+    @QtCore.pyqtSlot()
+    def signupOnStart(self):
+        logging.info("SignUp request starting")
+        self.interSignUpPushButton.setEnabled(False)
+
+    @QtCore.pyqtSlot('PyQt_PyObject')
+    def signupOnError(self, exce):
+        logging.error(f"SignUp exception: {exce}")
+        self.interSignUpPushButton.setEnabled(True)
+
+    @QtCore.pyqtSlot(dict)
+    def signupOnResult(self, json_object):
+        logging.info(f"SignUp result: {json_object}")
+        self.interSignUpPushButton.setEnabled(True)
+
+    @QtCore.pyqtSlot()
+    def interSearchPushButtonAction(self):
+        pass
+
+

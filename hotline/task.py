@@ -3,6 +3,7 @@ import inbox
 import asyncio
 import ftplib
 import os
+import inter
 
 
 # def recvall(sock: socket.socket, length):
@@ -122,3 +123,34 @@ class DownloadFileThread(QtCore.QRunnable):
             self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
         else:
             self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+
+
+class SignUpRequestSiganls(QtCore.QObject):
+    on_start = QtCore.pyqtSignal()
+    on_error = QtCore.pyqtSignal('PyQt_PyObject')
+    on_result = QtCore.pyqtSignal(dict)
+
+
+class SignUpRequestThread(QtCore.QRunnable):
+    def __init__(self, server_addr, server_port, server_password, c_mac, c_name, c_port, c_getonlybymac):
+        super(SignUpRequestThread, self).__init__()
+        self.server_address = server_addr
+        self.server_port = server_port
+        self.server_password = server_password
+        self.signals = SignUpRequestSiganls()
+
+        self.c_mac = c_mac
+        self.c_name = c_name
+        self.c_port = c_port
+        self.c_getonlybymac = c_getonlybymac
+
+    def run(self) -> None:
+        request = inter.sign_up(self.c_mac, self.c_name, self.c_port, self.c_getonlybymac)
+        try:
+            self.signals.on_start.emit()
+            result = asyncio.run(request.send_to(self.server_address, self.server_port, password=self.server_password))
+        except Exception as e:
+            self.signals.on_error.emit(e)
+        else:
+            self.signals.on_result.emit(result)
+
