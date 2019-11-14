@@ -154,3 +154,34 @@ class SignUpRequestThread(QtCore.QRunnable):
         else:
             self.signals.on_result.emit(result)
 
+
+class GetRequestSignals(QtCore.QObject):
+    on_start = QtCore.pyqtSignal()
+    on_result = QtCore.pyqtSignal(dict)
+    on_error = QtCore.pyqtSignal('PyQt_PyObject')
+    on_finished = QtCore.pyqtSignal()
+
+
+class GetRequestThread(QtCore.QRunnable):
+    def __init__(self, server_addr, server_port, server_password, mac=None, username=None):
+        super(GetRequestThread, self).__init__()
+        self.server_address = server_addr
+        self.server_port = server_port
+        self.server_password = server_password
+        self.signals = GetRequestSignals()
+        if mac:
+            self.request = inter.get_by_mac(mac)
+        else:
+            self.request = inter.get_by_username(username)
+
+    def run(self) -> None:
+        try:
+            self.signals.on_start.emit()
+            result = asyncio.run(
+                self.request.send_to(self.server_address, self.server_port, password=self.server_password))
+        except Exception as e:
+            self.signals.on_error.emit(e)
+        else:
+            self.signals.on_result.emit(result)
+        finally:
+            self.signals.on_finished.emit()

@@ -1040,7 +1040,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
         self.loadInterlocutorConfiguration()
+        self.setupInterlocutorTable()
         self.interSignUpPushButton.clicked.connect(self.interSignUpPushButtonAction)
+        self.interSearchPushButton.clicked.connect(self.interSearchPushButtonAction)
 
     def setupNotificationsTab(self):
         self.setupNotificationsTable()
@@ -2147,6 +2149,70 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot()
     def interSearchPushButtonAction(self):
-        pass
 
+        server_address = self.interIpAddressLineEdit.text()
+        server_port = self.interPortSpinBox.value()
+        server_password = self.interPasswordLineEdit.text()
 
+        pattern = self.interSearchLineEdit.text()
+        if self.interSearchCriteriaComboBox.currentText() == 'Name':
+            getThread = task.GetRequestThread(server_address, server_port, server_password, username=pattern)
+        else:
+            getThread = task.GetRequestThread(server_address, server_port, server_password, mac=pattern)
+
+        getThread.signals.on_finished.connect(self.getRequestOnFinished)
+        getThread.signals.on_error.connect(self.getRequestOnError)
+        getThread.signals.on_result.connect(self.getRequestOnResult)
+        getThread.signals.on_start.connect(self.getRequestOnStart)
+        self.threadPool.start(getThread)
+
+    @QtCore.pyqtSlot()
+    def getRequestOnStart(self):
+        self.interSearchLineEdit.setEnabled(False)
+        self.interSearchCriteriaComboBox.setEnabled(False)
+        self.interSearchPushButton.setEnabled(False)
+
+    @QtCore.pyqtSlot('PyQt_PyObject')
+    def getRequestOnError(self, e):
+        logging.info(f'GET error: {e}')
+
+    @QtCore.pyqtSlot(dict)
+    def getRequestOnResult(self, info):
+        logging.info(f'GET result: {info} {type(info)}')
+
+        if info.get('error'):
+            pass
+        else:
+            clients = info.get('clients')
+            if clients:
+                for client in clients:
+                    row = self.interDbTableWidget.rowCount()
+                    self.interDbTableWidget.insertRow(row)
+                    item = QtWidgets.QTableWidgetItem(client['username'])
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 0, item)
+                    item = QtWidgets.QTableWidgetItem(client['ipv4_addr'])
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 1, item)
+                    item = QtWidgets.QTableWidgetItem(str(client['port']))
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 2, item)
+                    item = QtWidgets.QTableWidgetItem('Add me')
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 3, item)
+
+    @QtCore.pyqtSlot()
+    def getRequestOnFinished(self):
+        self.interSearchLineEdit.setEnabled(True)
+        self.interSearchCriteriaComboBox.setEnabled(True)
+        self.interSearchPushButton.setEnabled(True)
+
+    def setupInterlocutorTable(self):
+        headers = ['Name', 'IPv4 address', 'Port', 'Actions']
+        self.interDbTableWidget.setColumnCount(len(headers))
+        self.interDbTableWidget.setHorizontalHeaderLabels(headers)
+        header = self.interDbTableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeToContents)
