@@ -28,6 +28,7 @@ import configuration
 import task
 import ftplib
 import knownpaths
+import inbox
 
 
 class FtpClientTabWidget(QtWidgets.QWidget):
@@ -284,14 +285,6 @@ class Ui_HotlineMainWindow(object):
         self.conversationsTableWidget.setColumnCount(0)
         self.conversationsTableWidget.setRowCount(0)
         self.verticalLayout_21.addWidget(self.conversationsTableWidget)
-        self.horizontalLayout_12 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_12.setObjectName("horizontalLayout_12")
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem)
-        self.newChatPushButton = QtWidgets.QPushButton(self.conversationsGroupBox)
-        self.newChatPushButton.setObjectName("newChatPushButton")
-        self.horizontalLayout_12.addWidget(self.newChatPushButton)
-        self.verticalLayout_21.addLayout(self.horizontalLayout_12)
         self.verticalLayout_23.addLayout(self.verticalLayout_21)
         self.horizontalLayout_16.addWidget(self.conversationsGroupBox)
         self.chatGroupBox = QtWidgets.QGroupBox(self.tabChats)
@@ -305,16 +298,13 @@ class Ui_HotlineMainWindow(object):
         self.chatMateMacAddressLabel = QtWidgets.QLabel(self.chatGroupBox)
         self.chatMateMacAddressLabel.setObjectName("chatMateMacAddressLabel")
         self.horizontalLayout_14.addWidget(self.chatMateMacAddressLabel)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_14.addItem(spacerItem1)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_14.addItem(spacerItem)
         self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_13.setObjectName("horizontalLayout_13")
         self.chatMateFilesPushButton = QtWidgets.QPushButton(self.chatGroupBox)
         self.chatMateFilesPushButton.setObjectName("chatMateFilesPushButton")
         self.horizontalLayout_13.addWidget(self.chatMateFilesPushButton)
-        self.chatMateAddToContactsPushButton = QtWidgets.QPushButton(self.chatGroupBox)
-        self.chatMateAddToContactsPushButton.setObjectName("chatMateAddToContactsPushButton")
-        self.horizontalLayout_13.addWidget(self.chatMateAddToContactsPushButton)
         self.horizontalLayout_14.addLayout(self.horizontalLayout_13)
         self.verticalLayout_24.addLayout(self.horizontalLayout_14)
         self.chatTextEdit = QtWidgets.QTextEdit(self.chatGroupBox)
@@ -465,8 +455,8 @@ class Ui_HotlineMainWindow(object):
         self.horizontalLayout_20.addLayout(self.horizontalLayout_19)
         self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_17.setObjectName("horizontalLayout_17")
-        spacerItem2 = QtWidgets.QSpacerItem(13, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_17.addItem(spacerItem2)
+        spacerItem1 = QtWidgets.QSpacerItem(13, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_17.addItem(spacerItem1)
         self.addNewContactPushButton = QtWidgets.QPushButton(self.newContactGroupBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -607,8 +597,8 @@ class Ui_HotlineMainWindow(object):
         self.ftpBannerPlainTextEdit.setObjectName("ftpBannerPlainTextEdit")
         self.verticalLayout_15.addWidget(self.ftpBannerPlainTextEdit)
         self.verticalLayout_19.addWidget(self.groupBox_7)
-        spacerItem3 = QtWidgets.QSpacerItem(248, 15, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_19.addItem(spacerItem3)
+        spacerItem2 = QtWidgets.QSpacerItem(248, 15, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_19.addItem(spacerItem2)
         self.groupBox_8 = QtWidgets.QGroupBox(self.tabFTP)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -624,8 +614,8 @@ class Ui_HotlineMainWindow(object):
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        spacerItem4 = QtWidgets.QSpacerItem(80, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_4.addItem(spacerItem4)
+        spacerItem3 = QtWidgets.QSpacerItem(80, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_4.addItem(spacerItem3)
         self.ftpStartPushButton = QtWidgets.QPushButton(self.groupBox_8)
         self.ftpStartPushButton.setObjectName("ftpStartPushButton")
         self.horizontalLayout_4.addWidget(self.ftpStartPushButton)
@@ -755,8 +745,8 @@ class Ui_HotlineMainWindow(object):
         self.formLayout_7.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.myContactInfoInboxPortSpinBox)
         self.verticalLayout_6.addLayout(self.formLayout_7)
         self.verticalLayout_22.addWidget(self.groupBox_2)
-        spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout_22.addItem(spacerItem5)
+        spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_22.addItem(spacerItem4)
         self.groupBox_11 = QtWidgets.QGroupBox(self.tabInterlocutor)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -773,8 +763,8 @@ class Ui_HotlineMainWindow(object):
         self.verticalLayout_9.setObjectName("verticalLayout_9")
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        spacerItem6 = QtWidgets.QSpacerItem(160, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_8.addItem(spacerItem6)
+        spacerItem5 = QtWidgets.QSpacerItem(160, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_8.addItem(spacerItem5)
         self.interSignUpPushButton = QtWidgets.QPushButton(self.groupBox_11)
         self.interSignUpPushButton.setObjectName("interSignUpPushButton")
         self.horizontalLayout_8.addWidget(self.interSignUpPushButton)
@@ -852,8 +842,7 @@ class Ui_HotlineMainWindow(object):
         self.tabWidget.setCurrentIndex(0)
         self.downloadsTabWidget.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(HotlineMainWindow)
-        HotlineMainWindow.setTabOrder(self.chatMateFilesPushButton, self.chatMateAddToContactsPushButton)
-        HotlineMainWindow.setTabOrder(self.chatMateAddToContactsPushButton, self.ftpIpAddressLineEdit)
+        HotlineMainWindow.setTabOrder(self.chatMateFilesPushButton, self.ftpIpAddressLineEdit)
         HotlineMainWindow.setTabOrder(self.ftpIpAddressLineEdit, self.ftpPortSpinBox)
         HotlineMainWindow.setTabOrder(self.ftpPortSpinBox, self.ftpMaxConnectionsSpinBox)
         HotlineMainWindow.setTabOrder(self.ftpMaxConnectionsSpinBox, self.ftpMaxConnectionsPerIPSpinBox)
@@ -887,8 +876,7 @@ class Ui_HotlineMainWindow(object):
         HotlineMainWindow.setTabOrder(self.chatTextEdit, self.messageLineEdit)
         HotlineMainWindow.setTabOrder(self.messageLineEdit, self.sendMessagePushButton)
         HotlineMainWindow.setTabOrder(self.sendMessagePushButton, self.findContactPushButton)
-        HotlineMainWindow.setTabOrder(self.findContactPushButton, self.newChatPushButton)
-        HotlineMainWindow.setTabOrder(self.newChatPushButton, self.conversationsTableWidget)
+        HotlineMainWindow.setTabOrder(self.findContactPushButton, self.conversationsTableWidget)
         HotlineMainWindow.setTabOrder(self.conversationsTableWidget, self.ftpFolderLineEdit)
         HotlineMainWindow.setTabOrder(self.ftpFolderLineEdit, self.ftpConnectedUsersTableWidget)
         HotlineMainWindow.setTabOrder(self.ftpConnectedUsersTableWidget, self.ftpFilesTableWidget)
@@ -900,11 +888,9 @@ class Ui_HotlineMainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         HotlineMainWindow.setWindowTitle(_translate("HotlineMainWindow", "Hotline"))
         self.conversationsGroupBox.setTitle(_translate("HotlineMainWindow", "Conversations"))
-        self.newChatPushButton.setText(_translate("HotlineMainWindow", "New chat"))
         self.chatGroupBox.setTitle(_translate("HotlineMainWindow", "A_Username"))
         self.chatMateMacAddressLabel.setText(_translate("HotlineMainWindow", "MAC address"))
         self.chatMateFilesPushButton.setText(_translate("HotlineMainWindow", "Files"))
-        self.chatMateAddToContactsPushButton.setText(_translate("HotlineMainWindow", "Add to contacts"))
         self.messageLineEdit.setPlaceholderText(_translate("HotlineMainWindow", "Type your message here"))
         self.sendMessagePushButton.setText(_translate("HotlineMainWindow", "Send"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabChats), _translate("HotlineMainWindow", "Chats"))
@@ -997,12 +983,76 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.setupChatsTab()
         self.setupNotificationsTab()
         self.setupDownloadsTab()
+        self.start_inbox_server()
 
         if "err" in kwargs:
             self.addNotificationToNotificationsTable(kwargs["err"])
 
     def setupDownloadsTab(self):
         self.downloadsTabWidget.tabCloseRequested.connect(self.close_download_tab)
+
+    def start_inbox_server(self):
+        conn = dbfunctions.get_connection()
+        mac, ipv4, inbox_port = dbfunctions.get_configuration(conn, 'mac_address', 'ipv4_address', 'inbox_port')
+        ipv6ll = configuration.generate_ipv6_linklocal_eui64_address(mac)
+
+        inbox_port = inbox_port if inbox_port else 42000
+
+        inboxServerThread4 = inbox.InboxServerThread(ipv4, inbox_port)
+        inboxServerThread6 = inbox.InboxServerThread(ipv4, inbox_port)
+        inboxServerThread4.signals.on_start.connect(self.inboxServerThreadOnStart)
+        inboxServerThread4.signals.on_error.connect(self.inboxServerThreadOnError)
+        inboxServerThread4.signals.on_message_received.connect(self.inboxServerThreadOnMessageReceived)
+        inboxServerThread4.signals.on_get_contact_information.connect(self.inboxServerThreadOnGetContactInformation)
+
+        self.threadPool.start(inboxServerThread4)
+
+    @QtCore.pyqtSlot(str, int)
+    def inboxServerThreadOnStart(self, ip, port):
+        logging.info(f'Inbox server started at {ip}:{port}')
+        self.addNotificationToNotificationsTable(f"Waiting for messages on {ip}:{port}")
+
+    @QtCore.pyqtSlot('PyQt_PyObject')
+    def inboxServerThreadOnError(self, e):
+        logging.info(f'Inbox server error: {e}')
+        self.addNotificationToNotificationsTable(f"Inbox server error: {e}")
+        self.addNotificationToNotificationsTable(f"You wont be able to receive messages")
+
+    @QtCore.pyqtSlot(dict)
+    def inboxServerThreadOnMessageReceived(self, msginfo):
+        logging.info(
+            f'Message received from {msginfo["mac_address"]}, IP={msginfo["ip"]} , stranger={msginfo["is_stranger"]}')
+        # If the contact was a stranger, he was added to contacts and the ip information has been updated in the
+        # database, so if its the current user of the chat update the messages, and if its not an stranger, update the info
+        # in the table
+
+        if msginfo['is_stranger']:  # Add him to the contacts table and the first chat is going to be him
+            conn = dbfunctions.get_connection()
+            name, ip4, ip6, inbox_p, ftp_p = dbfunctions.get_contact(conn, msginfo['mac_address'], 'name',
+                                                                     'ipv4_addres', 'ipv6_address', 'inbox_port',
+                                                                     'ftp_port')
+            conn.close()
+            self.addContactToContactsTable(name, msginfo["mac_address"], ip4, ip6, inbox_p, ftp_p)
+            self.addConversationToConversationsTable(msginfo["mac_address"], name)
+        else:  # Update the contacts table, and if he is the first chat, update the messages
+            for row in range(self.contactsTableWidget.rowCount()):
+                if self.contactsTableWidget.item(row, 1).text() == msginfo['mac_address']:
+                    if msginfo['ipv'] == 6:
+                        self.contactsTableWidget.item(row, 2).setText(msginfo['ipv4_add'])
+                    elif msginfo['ipv'] == 4:
+                        self.contactsTableWidget.item(row, 2).setText(msginfo['ipv4_add'])
+
+                    break
+
+            if self.chatMateMacAddressLabel.text() == msginfo["mac_address"]:
+                for row in range(self.conversationsTableWidget.rowCount()):
+                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == msginfo["mac_address"]:
+                        self.conversationsTableWidget.cellClicked.emit(row, 0)
+                        break
+
+    @QtCore.pyqtSlot(str)
+    def inboxServerThreadOnGetContactInformation(self, remote_ip):
+        pass
 
     @QtCore.pyqtSlot(int)
     def close_download_tab(self, index):
@@ -2113,7 +2163,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         item = QtWidgets.QTableWidgetItem(notification)
         item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
         self.notificationsTableWidget.setItem(row, 1, item)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications*")
+
+        if self.tabWidget.currentIndex() != 5:
+            self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabNotifications), "Notifications*")
 
     @QtCore.pyqtSlot()
     def interSignUpPushButtonAction(self):
@@ -2151,7 +2203,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
         answer = msg.exec_()
 
-
     @QtCore.pyqtSlot(dict)
     def signupOnResult(self, reply):
         logging.info(f"SignUp result: {reply}")
@@ -2177,7 +2228,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
-
 
     @QtCore.pyqtSlot()
     def interSearchPushButtonAction(self):
@@ -2297,7 +2347,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             ipv4_address = ipv4_address if valid.is_ipv4_address(ipv4_address) else ''
             ipv6_address = ipv6_address if valid.is_ipv6_address(ipv6_address) else ''
             inbox_port = inbox_port if inbox_port and 0 <= inbox_port <= 65535 else 42000
-            ftp_port =  ftp_port if ftp_port and 0 <= ftp_port <= 65535 else 21
+            ftp_port = ftp_port if ftp_port and 0 <= ftp_port <= 65535 else 21
         except Exception as e:
             msg = QtWidgets.QMessageBox(
                 QtWidgets.QMessageBox.Critical,

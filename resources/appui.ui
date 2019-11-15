@@ -56,30 +56,6 @@
                <item>
                 <widget class="QTableWidget" name="conversationsTableWidget"/>
                </item>
-               <item>
-                <layout class="QHBoxLayout" name="horizontalLayout_12">
-                 <item>
-                  <spacer name="horizontalSpacer_4">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="newChatPushButton">
-                   <property name="text">
-                    <string>New chat</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
               </layout>
              </item>
             </layout>
@@ -121,13 +97,6 @@
                     <widget class="QPushButton" name="chatMateFilesPushButton">
                      <property name="text">
                       <string>Files</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QPushButton" name="chatMateAddToContactsPushButton">
-                     <property name="text">
-                      <string>Add to contacts</string>
                      </property>
                     </widget>
                    </item>
@@ -1235,7 +1204,6 @@
  </widget>
  <tabstops>
   <tabstop>chatMateFilesPushButton</tabstop>
-  <tabstop>chatMateAddToContactsPushButton</tabstop>
   <tabstop>ftpIpAddressLineEdit</tabstop>
   <tabstop>ftpPortSpinBox</tabstop>
   <tabstop>ftpMaxConnectionsSpinBox</tabstop>
@@ -1270,7 +1238,6 @@
   <tabstop>messageLineEdit</tabstop>
   <tabstop>sendMessagePushButton</tabstop>
   <tabstop>findContactPushButton</tabstop>
-  <tabstop>newChatPushButton</tabstop>
   <tabstop>conversationsTableWidget</tabstop>
   <tabstop>ftpFolderLineEdit</tabstop>
   <tabstop>ftpConnectedUsersTableWidget</tabstop>

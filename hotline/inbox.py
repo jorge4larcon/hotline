@@ -5,6 +5,7 @@ import socket
 import datetime
 import valid
 import dbfunctions
+from PyQt5 import QtCore
 
 MAX_BYTES = 4096
 
@@ -17,6 +18,18 @@ def address_and_family(writer: asyncio.StreamWriter):
             return peername[0], peersocket.family
         else:
             return None, peersocket.family
+    else:
+        return None, None
+
+
+def address_and_family_from_transport(transport: asyncio.transports.BaseTransport):
+    socket = transport.get_extra_info('socket')
+    if socket:
+        peername = transport.get_extra_info('peername')
+        if peername:
+            return peername[0], socket.family
+        else:
+            return None, socket.family
     else:
         return None, None
 
@@ -153,12 +166,14 @@ async def confirm_received(writer, receiver, received_timestamp):
     await writer.drain()
 
 
-async def receive_message(message, user_mac_address, received_timestamp, peer_address, peer_family):
+async def receive_message(message, user_mac_address, received_timestamp, peer_address, peer_family, signals):
     if user_mac_address == message['receiver']:
         try:
             conn = dbfunctions.get_connection()
             exists = dbfunctions.get_contact(conn, message['sender'], 'name')
+            is_stranger = False
             if not exists:
+                is_stranger = True
                 if peer_address:
                     if peer_family == socket.AF_INET:
                         dbfunctions.insert_contact(conn, message['sender'], name='Stranger', ipv4_address=peer_address)
@@ -170,8 +185,20 @@ async def receive_message(message, user_mac_address, received_timestamp, peer_ad
                     dbfunctions.insert_contact(conn, message['sender'], name='Stranger')
 
             # TODO: After adding or not the contact its a good idead to update its ip address in the database
+
+            ipv = None
+            if peer_address:
+                if peer_family == socket.AF_INET:
+                    ipv = 4
+                    dbfunctions.update_contact(conn, message['sender'], ipv4_address=peer_address)
+                elif peer_family == socket.AF_INET6:
+                    ipv = 6
+                    dbfunctions.update_contact(conn, message['sender'], ipv6_address=peer_address)
+
             dbfunctions.insert_received_message(conn, received_timestamp, message['sender'], message['content'],
                                                 message['sent_timestamp'])
+            signal_info = {"mac_address": message['sender'], "is_stranger": is_stranger, "ipv": ipv, "ip": peer_address}
+            signals.on_message_received.emit(signal_info)
         except Exception as e:
             logging.error(e)
         finally:
@@ -227,8 +254,134 @@ async def handle_client(reader, writer):
     writer.close()
 
 
-async def start_server(ip_address, port=42000):
+async def start_server(ip_address, signals, port=42000):
     server = await asyncio.start_server(handle_client, ip_address, port)
     logging.info(f'Inbox server listening on {ip_address}:{port}')
     async with server:
         await server.serve_forever()
+
+
+class InboxServerSignals(QtCore.QObject):
+    # the ip and port where the server is binded
+    on_start = QtCore.pyqtSignal(str, int)
+    on_error = QtCore.pyqtSignal('PyQt_PyObject')
+    # The mac address of who sent us the message
+    on_message_received = QtCore.pyqtSignal(dict)
+    # remote ip who requested information
+    on_get_contact_information = QtCore.pyqtSignal(str)
+
+
+class InboxServerProtocol(asyncio.Protocol):
+    def __init__(self, signals: InboxServerSignals):
+        self.signals = signals
+
+    def connection_made(self, transport: asyncio.transports.BaseTransport) -> None:
+        peername = transport.get_extra_info('peername')
+        logging.info('Connection from {}'.format(peername))
+        self.transport = transport
+
+    def data_received(self, data: bytes) -> None:
+        request = parse_request(data)
+        if request:
+            conn = dbfunctions.get_connection()
+            mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port = dbfunctions.get_configuration(
+                conn, 'mac_address', 'username', 'ipv4_address', 'ipv6_address', 'inbox_port', 'ftp_port')
+            conn.close()
+            if mac_address:
+                peer_address, peer_family = address_and_family_from_transport(self.transport)
+                if request['subject'] == 'message':
+                    received_timestamp = datetime.datetime.now().isoformat()
+
+                    ### CONFIRM RECEIVED
+                    confirmation = f'{{"received_timestamp":"{received_timestamp}","receiver":"{mac_address}"}}'.encode(
+                        'UTF-8')
+                    self.transport.write(confirmation)
+                    ### CONFIRM RECEIVED
+
+                    ### RECEIVE MESSAGE
+                    if mac_address == request['receiver']:
+                        try:
+                            conn = dbfunctions.get_connection()
+                            exists = dbfunctions.get_contact(conn, request['sender'], 'name')
+                            is_stranger = False
+                            if not exists:
+                                is_stranger = True
+                                if peer_address:
+                                    if peer_family == socket.AF_INET:
+                                        dbfunctions.insert_contact(conn, request['sender'], name='Stranger',
+                                                                   ipv4_address=peer_address)
+                                    elif peer_family == socket.AF_INET6:
+                                        dbfunctions.insert_contact(conn, request['sender'], name='Stranger',
+                                                                   ipv6_address=peer_address)
+                                    else:
+                                        dbfunctions.insert_contact(conn, request['sender'], name='Stranger')
+                                else:
+                                    dbfunctions.insert_contact(conn, request['sender'], name='Stranger')
+
+                            # TODO: After adding or not the contact its a good idead to update its ip address in the database
+
+                            ipv = None
+                            if peer_address:
+                                if peer_family == socket.AF_INET:
+                                    ipv = 4
+                                    dbfunctions.update_contact(conn, request['sender'], ipv4_address=peer_address)
+                                elif peer_family == socket.AF_INET6:
+                                    ipv = 6
+                                    dbfunctions.update_contact(conn, request['sender'], ipv6_address=peer_address)
+
+                            dbfunctions.insert_received_message(conn, received_timestamp, request['sender'],
+                                                                request['content'],
+                                                                request['sent_timestamp'])
+                            signal_info = {"mac_address": request['sender'], "is_stranger": is_stranger, "ipv": ipv,
+                                           "ip": peer_address}
+                            self.signals.on_message_received.emit(signal_info)
+                        except Exception as e:
+                            logging.error(e)
+                        finally:
+                            conn.close()
+                    else:
+                        logging.info(f"I received a message that was for '{request['receiver']}'")
+                    ### RECEIVE MESSAGE
+
+                elif request['subject'] == 'get_contact_information':
+                    self.signals.on_get_contact_information.emit(peer_address)
+
+                    ### DELIVER CONTACT INFORMATION
+                    contact_info = json.dumps({
+                        "name": name,
+                        "mac_address": mac_address,
+                        "ipv4_address": ipv4_address,
+                        "ipv6_address": ipv6_address,
+                        "inbox_port": inbox_port,
+                        "ftp_port": ftp_port
+                    }).encode('UTF-8')
+                    self.transport.write(contact_info)
+                    ### DELIVER CONTACT INFORMATION
+            else:
+                logging.critical(f"Could not obtain the user information from the database")
+        else:
+            logging.error(f"Could not parse the request")
+
+        self.transport.close()
+
+
+async def run_inbox_server(ip, port, signals):
+    loop = asyncio.get_running_loop()
+    server = await loop.create_server(lambda: InboxServerProtocol(signals), ip, port)
+    signals.on_start.emit(ip, port)
+    async with server:
+        await server.serve_forever()
+
+
+class InboxServerThread(QtCore.QRunnable):
+    def __init__(self, ip, port):
+        super(InboxServerThread, self).__init__()
+        self.ip = ip
+        self.port = port
+        self.signals = InboxServerSignals()
+
+    def run(self) -> None:
+        try:
+            asyncio.run(run_inbox_server(self.ip, self.port, self.signals))
+        except Exception as e:
+            self.signals.on_error.emit(e)
