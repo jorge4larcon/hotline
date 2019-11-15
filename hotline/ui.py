@@ -1824,7 +1824,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         )
         answer = msg.exec_()
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.pyqtSlot(dict)
     def getContactInfoForFtpConnectionOnResult(self, info):
         logging.info(f"GetContactInformation request result: {info}")
         mac_address = info['mac_address']
@@ -1854,20 +1854,15 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         logging.info(f'Succesfully FTP client login')
         self.addFtpClientToDownloadsTab(ftp_conn)
 
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setWindowTitle('Success')
+        msg.setText("FTP connection established")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
+
         self.tabWidget.setCurrentIndex(4)
-
-        ######## BUG
-
-        # self.downloadsTabWidget.setCurrentIndex(self.downloadsTabWidget.count())
-
-        # msg = QtWidgets.QMessageBox(self)
-        # msg.setIcon(QtWidgets.QMessageBox.Information)
-        # msg.setWindowTitle('FTP connection established')
-        # msg.setText("This user doesn't have an IP address")
-        # msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
-        # msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-        # msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
-        # answer = msg.exec_()
 
     def addFtpClientToDownloadsTab(self, ftp_conn: ftplib.FTP):
         newDownloadTab = FtpClientTabWidget(ftp_conn, self.downloadsTabWidget, self.threadPool,
@@ -1879,6 +1874,13 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     @QtCore.pyqtSlot(str, int)
     def startFtpClientConnectionOnError(self, ip, port):
         logging.error(f"Could not FTP client connect with {ip}:{port}")
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(f"Could not connect to FTP server {ip}:{port}")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
 
     @QtCore.pyqtSlot()
     def startFtpClientConnectionOnFinished(self):
@@ -2141,11 +2143,41 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def signupOnError(self, exce):
         logging.error(f"SignUp exception: {exce}")
         self.interSignUpPushButton.setEnabled(True)
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(f"Could sign up to interlocutor server")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
+
 
     @QtCore.pyqtSlot(dict)
-    def signupOnResult(self, json_object):
-        logging.info(f"SignUp result: {json_object}")
+    def signupOnResult(self, reply):
+        logging.info(f"SignUp result: {reply}")
         self.interSignUpPushButton.setEnabled(True)
+
+        result = reply.get('result')
+        if result:
+            msg = QtWidgets.QMessageBox(self)
+            msg.setIcon(QtWidgets.QMessageBox.Information)
+            msg.setWindowTitle('Success')
+            msg.setText(f"Interlocutor server says: '{result}'")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+            answer = msg.exec_()
+        else:
+            error = reply.get('error')
+            error_name = reply.get('name')
+            if error and error_name:
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
+                msg.setWindowTitle('Error')
+                msg.setText(f"Interlocutor server says: {error_name} [Error code {error}]")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                answer = msg.exec_()
+
 
     @QtCore.pyqtSlot()
     def interSearchPushButtonAction(self):
@@ -2180,6 +2212,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def getRequestOnResult(self, info):
         logging.info(f'GET result: {info} {type(info)}')
 
+        while self.interDbTableWidget.rowCount():
+            self.interDbTableWidget.removeRow(0)
+
         if info.get('error'):
             pass
         else:
@@ -2197,9 +2232,158 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     item = QtWidgets.QTableWidgetItem(str(client['port']))
                     item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
                     self.interDbTableWidget.setItem(row, 2, item)
-                    item = QtWidgets.QTableWidgetItem('Add me')
+
+                    addToContactsButton = QtWidgets.QPushButton('Add to contacts')
+                    addToContactsButton.clicked.connect(self.interlocutorAddToContactsButton)
+                    self.interDbTableWidget.setCellWidget(row, 3, addToContactsButton)
+            else:
+                client = info.get('client')
+                if client:
+                    row = self.interDbTableWidget.rowCount()
+                    self.interDbTableWidget.insertRow(row)
+                    item = QtWidgets.QTableWidgetItem(client['username'])
                     item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
-                    self.interDbTableWidget.setItem(row, 3, item)
+                    self.interDbTableWidget.setItem(row, 0, item)
+                    item = QtWidgets.QTableWidgetItem(client['ipv4_addr'])
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 1, item)
+                    item = QtWidgets.QTableWidgetItem(str(client['port']))
+                    item.setFlags(item.flags() ^ QtCore.Qt.ItemIsEditable)
+                    self.interDbTableWidget.setItem(row, 2, item)
+
+                    addToContactsButton = QtWidgets.QPushButton('Add to contacts')
+                    addToContactsButton.clicked.connect(self.interlocutorAddToContactsButton)
+                    self.interDbTableWidget.setCellWidget(row, 3, addToContactsButton)
+
+    @QtCore.pyqtSlot()
+    def interlocutorAddToContactsButton(self):
+        button = self.sender()
+        if button:
+            row = self.interDbTableWidget.indexAt(button.pos()).row()
+            name = self.interDbTableWidget.item(row, 0).text()
+            ipv4 = self.interDbTableWidget.item(row, 1).text()
+            port = self.interDbTableWidget.item(row, 2).text()
+
+            interGetContactInfoThread = task.GetContactInformationThread(ipv4, int(port))
+            interGetContactInfoThread.signals.on_result.connect(self.interGetContactInfoThreadOnResult)
+            interGetContactInfoThread.signals.on_error.connect(self.interGetContactInfoThreadOnError)
+            interGetContactInfoThread.signals.on_finished.connect(self.interGetContactInfoThreadOnFinished)
+            logging.info(f"Making a friend request to: '{name}' {ipv4}:{port}")
+            self.threadPool.start(interGetContactInfoThread)
+
+    @QtCore.pyqtSlot(dict)
+    def interGetContactInfoThreadOnResult(self, new_contact):
+        for row in range(self.contactsTableWidget.rowCount()):
+            if new_contact.get('mac_address') == self.contactsTableWidget.item(row, 1).text():
+                # Contact exists, update
+                self.contactsTableWidget.item(row, 2).setText(new_contact['ipv4_address'])
+                self.contactsTableWidget.item(row, 3).setText(new_contact['ipv6_address'])
+                self.contactsTableWidget.cellWidget(row, 4).setValue(new_contact['ipv6_address'])
+                self.contactsTableWidget.cellWidget(row, 5).setValue(new_contact['ipv6_address'])
+                return
+
+        # Contact does not exist, add him
+
+        name = new_contact.get('name')
+        mac_address = new_contact.get('mac_address')
+        ipv4_address = new_contact.get('ipv4_address')
+        ipv6_address = new_contact.get('ipv6_address')
+        ftp_port = new_contact.get('ftp_port')
+        inbox_port = new_contact.get('inbox_port')
+
+        try:
+            valid.is_name(name, exception=True)
+            valid.is_mac_address(mac_address, exception=True)
+            ipv4_address = ipv4_address if valid.is_ipv4_address(ipv4_address) else ''
+            ipv6_address = ipv6_address if valid.is_ipv6_address(ipv6_address) else ''
+            inbox_port = inbox_port if inbox_port and 0 <= inbox_port <= 65535 else 42000
+            ftp_port =  ftp_port if ftp_port and 0 <= ftp_port <= 65535 else 21
+        except Exception as e:
+            msg = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Critical,
+                'Wrong value received',
+                f'{e}',
+                QtWidgets.QMessageBox.Ok
+            )
+            answer = msg.exec_()
+        else:
+            try:
+                conn = dbfunctions.get_connection()
+                dbfunctions.insert_contact(conn, mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port)
+            except sqlite3.IntegrityError as e:
+                logging.error(f'{e}')
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Critical,
+                    'Error',
+                    f"A contact with the MAC address '{mac_address}' is already registered",
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+            else:
+                msg = QtWidgets.QMessageBox(
+                    QtWidgets.QMessageBox.Information,
+                    'Success',
+                    'The contact was added successfully',
+                    QtWidgets.QMessageBox.Ok
+                )
+                answer = msg.exec_()
+                self.addContactToContactsTable(name, mac_address, ipv4_address, ipv6_address, inbox_port, ftp_port)
+            finally:
+                conn.close()
+
+    @QtCore.pyqtSlot(str, int)
+    def interGetContactInfoThreadOnError(self, ip, port):
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(f"Could not add {ip}:{port} to contacts, sending a DROP request...")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
+
+        server_addr = self.interIpAddressLineEdit.text()
+        server_port = self.interPortSpinBox.value()
+        server_password = self.interPasswordLineEdit.text()
+        dropRequestThread = task.DropRequestThread(server_addr, server_port, server_password, ip)
+        dropRequestThread.signals.on_start.connect(self.dropRequestThreadOnStart)
+        dropRequestThread.signals.on_error.connect(self.dropRequestThreadOnError)
+        dropRequestThread.signals.on_result.connect(self.dropRequestThreadOnResult)
+        dropRequestThread.signals.on_finished.connect(self.dropRequestThreadOnFinished)
+        self.threadPool.start(dropRequestThread)
+
+    @QtCore.pyqtSlot(str)
+    def dropRequestThreadOnStart(self, ip_to_drop):
+        logging.info(f"Requesting the interlocutor server to drop {ip_to_drop}")
+        self.addNotificationToNotificationsTable(f"Requesting the interlocutor server to drop {ip_to_drop}")
+
+    @QtCore.pyqtSlot('PyQt_PyObject', str)
+    def dropRequestThreadOnError(self, error, ip_to_drop):
+        logging.error(f"Could not request the interlocutor server to drop {ip_to_drop}, error: {e}")
+        self.addNotificationToNotificationsTable(
+            f"Could not request the interlocutor server to drop {ip_to_drop}, error: {e}")
+
+    @QtCore.pyqtSlot(dict)
+    def dropRequestThreadOnResult(self, reply: dict):
+        result = reply.get('result')
+        if result:
+            msg = f"Interlocutor server says: '{result}'"
+            logging.info(msg)
+            self.addNotificationToNotificationsTable(msg)
+        else:
+            error = reply.get('error')
+            nameerror = reply.get('name')
+            if error and nameerror:
+                msg = f"Interlocutor server says: '{nameerror}'[Err code {error}]"
+                logging.info(msg)
+                self.addNotificationToNotificationsTable(msg)
+
+    @QtCore.pyqtSlot()
+    def dropRequestThreadOnFinished(self):
+        pass
+
+    @QtCore.pyqtSlot()
+    def interGetContactInfoThreadOnFinished(self):
+        pass
 
     @QtCore.pyqtSlot()
     def getRequestOnFinished(self):

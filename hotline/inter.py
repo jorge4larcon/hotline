@@ -30,9 +30,8 @@ class _Base:
                 f'Sending a {self.method} to {ip}:{port} PASSWORD={password} [{len(request)} byte(s)]')
             writer.write(request)
             await writer.drain()
-        except asyncio.TimeoutError as e:
-            logging.error(e)
-            return None
+        except Exception as e:
+            raise e
 
         # Read / Receive
         try:
@@ -41,9 +40,9 @@ class _Base:
             reply = reply.decode('UTF-8')
             reply = json.loads(reply)
             return reply
-        except asyncio.TimeoutError as e:
-            logging.error(e)
-            return None
+        except Exception as e:
+            raise e
+
 
 
 class _Get(_Base):

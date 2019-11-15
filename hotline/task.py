@@ -15,7 +15,7 @@ import inter
 
 class GetContactInformationSignals(QtCore.QObject):
     on_error = QtCore.pyqtSignal(str, int)
-    on_result = QtCore.pyqtSignal(str)
+    on_result = QtCore.pyqtSignal(dict)
     on_finished = QtCore.pyqtSignal()
 
 
@@ -181,6 +181,35 @@ class GetRequestThread(QtCore.QRunnable):
                 self.request.send_to(self.server_address, self.server_port, password=self.server_password))
         except Exception as e:
             self.signals.on_error.emit(e)
+        else:
+            self.signals.on_result.emit(result)
+        finally:
+            self.signals.on_finished.emit()
+
+
+class DropRequestSignals(QtCore.QObject):
+    on_start = QtCore.pyqtSignal(str)
+    on_error = QtCore.pyqtSignal('PyQt_PyObject', str)
+    on_result = QtCore.pyqtSignal(dict)
+    on_finished = QtCore.pyqtSignal()
+
+
+class DropRequestThread(QtCore.QRunnable):
+    def __init__(self, server_address, server_port, server_password, ip_to_drop):
+        super(DropRequestThread, self).__init__()
+        self.signals = DropRequestSignals()
+        self.server_address = server_address
+        self.server_port = server_port
+        self.server_password = server_password
+        self.ip_to_drop = ip_to_drop
+
+    def run(self) -> None:
+        try:
+            request = inter.drop(self.ip_to_drop)
+            self.signals.on_start.emit(self.ip_to_drop)
+            result = asyncio.run(request.send_to(self.server_address, self.server_port, password=self.server_password))
+        except Exception as e:
+            self.signals.on_error.emit(e, self.ip_to_drop)
         else:
             self.signals.on_result.emit(result)
         finally:
