@@ -969,7 +969,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.findContactSearchPattern = ''
         self.lastMatchingRow = None
 
-        self.threadPool = QtCore.QThreadPool()
+        # Each Qt application has one global QThreadPool object, which can be accessed by calling globalInstance() .
+        self.threadPool = QtCore.QThreadPool()  # QThreadPool.globalInstance()
         self.ftpServerThread = None
 
         logging.info(f'max thread count = {self.threadPool.maxThreadCount()}')
@@ -1034,7 +1035,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             conn.close()
             self.addContactToContactsTable(name, msginfo["mac_address"], ip4, ip6, inbox_p, ftp_p)
             self.addConversationToConversationsTable(msginfo["mac_address"], name)
-        else:  # Update the contacts table, and if he is the first chat, update the messages
+        else:  # Update the contacts table, and if he is the active chat, update the messages
             for row in range(self.contactsTableWidget.rowCount()):
                 if self.contactsTableWidget.item(row, 1).text() == msginfo['mac_address']:
                     if msginfo['ipv'] == 6:
@@ -1052,7 +1053,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot(str)
     def inboxServerThreadOnGetContactInformation(self, remote_ip):
-        pass
+        logging.info(f"{remote_ip} requested contact information")
+        self.addNotificationToNotificationsTable(f"{remote_ip} requested contact information")
 
     @QtCore.pyqtSlot(int)
     def close_download_tab(self, index):
