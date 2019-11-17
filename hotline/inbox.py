@@ -385,3 +385,80 @@ class InboxServerThread(QtCore.QRunnable):
             asyncio.run(run_inbox_server(self.ip, self.port, self.signals))
         except Exception as e:
             self.signals.on_error.emit(e)
+
+
+class SendMessageSignals(QtCore.QObject):
+    # remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, exception
+    on_error = QtCore.pyqtSignal(str, str, int, str, str, str, str, int, 'PyQt_PyObject')
+    # remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, received_confirmation_dict
+    on_received_confirmation = QtCore.pyqtSignal(str, str, int, str, str, str, str, int, dict)
+    # remote_mac, remote_ip
+    on_sent = QtCore.pyqtSignal(str, str)
+
+
+
+class SendMessageThread(QtCore.QRunnable):
+    def __init__(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port):
+        super(SendMessageThread, self).__init__()
+        self.remote_ip4 = remote_ip4
+        self.remote_ip6 = remote_ip6
+        self.ip_version = ip_version
+        self.port = port
+
+        self.remote_mac = remote_mac
+        self.remote_name = remote_name
+
+        self.local_mac = local_mac
+
+        self.message = message
+
+        self.signals = SendMessageSignals()
+
+    def run(self) -> None:
+        try:
+            ip = None
+            if self.ip_version == 4:
+                ip = self.remote_ip4
+            elif self.ip_version == 6:
+                ip = self.remote_ip6
+
+            sent_timestamp = datetime.datetime.now().isoformat()
+            recv_confirmation = asyncio.run(message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
+        except Exception as e:
+            self.signals.on_error.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac, self.remote_name, self.local_mac, self.message, self.port, e)
+        else:
+            self.signals.on_received_confirmation.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac, self.remote_name, self.local_mac, self.message, self.port, recv_confirmation)
+
+
+class LastAttempSendMessageSignals(QtCore.QObject):
+    on_received_confirmation = QtCore.pyqtSignal(str, dict)
+    on_error = QtCore.pyqtSignal(str, 'PyQt_PyObject')
+
+
+class LastAttempSendMessageThread(QtCore.QRunnable):
+    def __init__(self, remote_ip4, remote_ip6, ip_version, port, remote_mac, remote_name, local_mac, message):
+        super(LastAttempSendMessageThread, self).__init__()
+        self.remote_ip4 = remote_ip4
+        self.remote_ip6 = remote_ip6
+        self.port = port
+        self.ip_version = ip_version
+        self.remote_mac = remote_mac
+        self.remote_name = remote_name
+        self.message = message
+        self.local_mac = local_mac
+        self.signals = LastAttempSendMessageSignals()
+
+    def run(self) -> None:
+        try:
+            ip = None
+            if self.ip_version == 4:
+                ip = self.remote_ip4
+            elif self.ip_version == 6:
+                ip = self.remote_ip6
+
+            sent_timestamp = datetime.datetime.now().isoformat()
+            recv_conf = asyncio.run(message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
+        except Exception as e:
+            self.signals.on_error.emit(self.remote_name, e)
+        else:
+            self.signals.on_received_confirmation(self.remote_mac, recv_conf)

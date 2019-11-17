@@ -13,6 +13,36 @@ import inter
 #         if not more:
 #             raise EOFError()
 
+class GetContactInformationForChatSignals(QtCore.QObject):
+    # remote_name
+    on_error = QtCore.pyqtSignal(str, 'PyQt_PyObject')
+    # remote_mac, local_mac, remote_name, message, contact_info
+    on_result = QtCore.pyqtSignal(str, str, str, str, dict)
+    on_finished = QtCore.pyqtSignal()
+
+
+class GetContactInformationForChatThread(QtCore.QRunnable):
+    def __init__(self, remote_ip, remote_port, remote_name, remote_mac, message, local_mac):
+        super(GetContactInformationForChatThread, self).__init__()
+        self.remote_ip = remote_ip
+        self.remote_port = remote_port
+        self.remote_name = remote_name
+        self.remote_mac = remote_mac
+        self.local_mac = local_mac
+        self.message = message
+        self.signals = GetContactInformationForChatSignals()
+
+    def run(self) -> None:
+        try:
+            result = asyncio.run(inbox.get_contact_information(self.ip, self.port, self.timeout))
+        except Exception as e:
+            self.signals.on_error.emit(self.remote_name, e)
+        else:
+            self.signals.on_result.emit(self.remote_mac, self.local_mac, self.remote_name, self.message, result)
+        finally:
+            self.signals.on_finished.emit()
+
+
 class GetContactInformationSignals(QtCore.QObject):
     on_error = QtCore.pyqtSignal(str, int)
     on_result = QtCore.pyqtSignal(dict)
