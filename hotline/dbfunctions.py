@@ -127,7 +127,7 @@ def get_configuration(conn: sqlite3.Connection, *args):
         return dict(zip(fields, values))
 
 
-def insert_contact(conn: sqlite3.Connection, mac_address, name='Muhammad', ipv4_address=None, ipv6_address=None,
+def insert_contact(conn: sqlite3.Connection, mac_address, name='Muhammad', ipv4_address='', ipv6_address='',
                    inbox_port=42000, ftp_port=21):
     statement = 'INSERT INTO Contact(mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port) ' \
                 'VALUES (?, ?, ?, ?, ?, ?)'

@@ -1039,7 +1039,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         if msginfo['is_stranger']:  # Add him to the contacts table and the first chat is going to be him
             conn = dbfunctions.get_connection()
             name, ip4, ip6, inbox_p, ftp_p = dbfunctions.get_contact(conn, msginfo['mac_address'], 'name',
-                                                                     'ipv4_addres', 'ipv6_address', 'inbox_port',
+                                                                     'ipv4_address', 'ipv6_address', 'inbox_port',
                                                                      'ftp_port')
             conn.close()
             self.addContactToContactsTable(name, msginfo["mac_address"], ip4, ip6, inbox_p, ftp_p)
@@ -1187,11 +1187,13 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_confirmation['received_timestamp'])
             conn.close()
 
-            if self.chatMateMacAddressLabel == remote_mac:
+            if self.chatMateMacAddressLabel.text() == remote_mac:
                 for row in range(self.conversationsTableWidget.rowCount()):
                     if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
                         self.conversationsTableWidget.cellClicked.emit(row, 0)
                         break
+
+            self.messageLineEdit.setText('')
 
         else:
             logging.info(
@@ -1335,11 +1337,13 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_conf['received_timestamp'])
             conn.close()
 
-            if self.chatMateMacAddressLabel == remote_mac:
+            if self.chatMateMacAddressLabel.text() == remote_mac:
                 for row in range(self.conversationsTableWidget.rowCount()):
                     if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
                         self.conversationsTableWidget.cellClicked.emit(row, 0)
                         break
+
+            self.messageLineEdit.setText('')
 
 
     @QtCore.pyqtSlot(str, 'PyQt_PyObject')
@@ -1581,6 +1585,17 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 answer = msg.exec_()
             else:
                 self.contactsTableWidget.removeRow(row)
+
+                for row in range(self.conversationsTableWidget.rowCount()):
+                    if mac_address == self.conversationsTableWidget.item(row, 0).text().split()[1]:
+                        self.conversationsTableWidget.removeRow(row)
+                        break
+
+                if mac_address == self.chatMateMacAddressLabel.text():
+                    self.chatMateMacAddressLabel.setText('')
+                    self.chatGroupBox.setTitle('')
+                    self.chatTextEdit.setText('')
+
             finally:
                 conn.close()
 
@@ -2525,6 +2540,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     @QtCore.pyqtSlot('PyQt_PyObject')
     def getRequestOnError(self, e):
         logging.info(f'GET error: {e}')
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(
+            f"Could not connect to the Interlocutor server")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
 
     @QtCore.pyqtSlot(dict)
     def getRequestOnResult(self, info):
@@ -2596,8 +2619,16 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 # Contact exists, update
                 self.contactsTableWidget.item(row, 2).setText(new_contact['ipv4_address'])
                 self.contactsTableWidget.item(row, 3).setText(new_contact['ipv6_address'])
-                self.contactsTableWidget.cellWidget(row, 4).setValue(new_contact['ipv6_address'])
-                self.contactsTableWidget.cellWidget(row, 5).setValue(new_contact['ipv6_address'])
+                self.contactsTableWidget.cellWidget(row, 4).setValue(new_contact['inbox_port'])
+                self.contactsTableWidget.cellWidget(row, 5).setValue(new_contact['ftp_port'])
+
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Information)
+                msg.setWindowTitle('Information')
+                msg.setText(f"The contact {new_contact['name']} ({new_contact['mac_address']}) aka {self.contactsTableWidget.item(row, 0).text()} ({self.contactsTableWidget.item(row, 1).text()}) has been updated")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                answer = msg.exec_()
                 return
 
         # Contact does not exist, add him
