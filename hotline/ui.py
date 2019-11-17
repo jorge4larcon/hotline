@@ -2394,7 +2394,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to share')
             logging.info(f"Folder selected: '{folder}'")
             if not folder:
-                return 
+                return
             self.ftpFolderLineEdit.setText(folder)
             self.ftpFolderLineEdit.editingFinished.emit()
 
