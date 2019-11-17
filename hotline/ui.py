@@ -103,12 +103,26 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         uploader.signals.on_start.connect(self.uploadFileOnStart)
         uploader.signals.on_error.connect(self.uploadFileOnError)
         uploader.signals.on_finished.connect(self.uploadFileOnFinished)
+        uploader.signals.on_end.connect(self.uploadFileOnEnd)
         self.thread_pool.start(uploader)
+
+    def freezeControls(self):
+        self.goBackPushButton.setEnabled(False)
+        self.refreshPushButton.setEnabled(False)
+        self.uploadPushButton.setEnabled(False)
+        self.ftpServerFilesTableWidget.setEnabled(False)
+
+    def unfreezeControls(self):
+        self.goBackPushButton.setEnabled(True)
+        self.refreshPushButton.setEnabled(True)
+        self.uploadPushButton.setEnabled(True)
+        self.ftpServerFilesTableWidget.setEnabled(True)
 
     @QtCore.pyqtSlot(str, int, str)
     def uploadFileOnStart(self, ip, port, filename):
         logging.info(f"Uploading '{filename}' to {ip}:{port}")
         self.addNotificationToNotificationsTable(f"Uploading '{filename}' to {ip}:{port}")
+        self.freezeControls()
 
     @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
     def uploadFileOnError(self, ip, port, filename, e):
@@ -120,7 +134,14 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         logging.info(f"'{filename}' was uploaded to {ip}:{port}")
         self.addNotificationToNotificationsTable(f"'{filename}' was uploaded to {ip}:{port}")
 
+    @QtCore.pyqtSlot()
+    def uploadFileOnEnd(self):
+        logging.info('The upload thread has finished, reactivating buttons')
+        self.unfreezeControls()
+
+
     def loadDirContentInFtpServerFilesTable(self):
+        self.freezeControls()
         while self.ftpServerFilesTableWidget.rowCount():
             self.ftpServerFilesTableWidget.removeRow(0)
 
@@ -151,7 +172,6 @@ class FtpClientTabWidget(QtWidgets.QWidget):
                     download_button.setText('Download file')
                     download_button.clicked.connect(self.downloadPushButtonAction)
                     self.ftpServerFilesTableWidget.setCellWidget(row, 3, download_button)
-
         except Exception as e:
             msg = QtWidgets.QMessageBox(self)
             msg.setIcon(QtWidgets.QMessageBox.Critical)
@@ -162,10 +182,13 @@ class FtpClientTabWidget(QtWidgets.QWidget):
             answer = msg.exec_()
             self.erase_myself()
 
+        self.unfreezeControls()
+
     @QtCore.pyqtSlot()
     def change_folder(self):
         btn = self.sender()
         if btn:
+            self.freezeControls()
             row = self.ftpServerFilesTableWidget.indexAt(btn.pos()).row()
             dirname = self.ftpServerFilesTableWidget.item(row, 0).text()
             try:
@@ -181,6 +204,8 @@ class FtpClientTabWidget(QtWidgets.QWidget):
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
                 self.erase_myself()
+
+            self.unfreezeControls()
 
     @QtCore.pyqtSlot()
     def refreshPushButtonAction(self):
@@ -201,12 +226,14 @@ class FtpClientTabWidget(QtWidgets.QWidget):
             downloadThread.signals.on_start.connect(self.downloadFileOnStart)
             downloadThread.signals.on_error.connect(self.downloadFileOnError)
             downloadThread.signals.on_finished.connect(self.downloadFileOnFinished)
+            downloadThread.signals.on_end.connect(self.downloadFileOnEnd)
             self.thread_pool.start(downloadThread)
 
     @QtCore.pyqtSlot(str, int, str)
     def downloadFileOnStart(self, ip, port, filename):
         logging.info(f"Downloading '{filename}' from {ip}:{port}")
         self.addNotificationToNotificationsTable(f"Downloading '{filename}' from {ip}:{port}")
+        self.freezeControls()
 
     @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
     def downloadFileOnError(self, ip, port, filename, e):
@@ -219,7 +246,12 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         self.addNotificationToNotificationsTable(f"'{filename}' was downloaded from {ip}:{port}")
 
     @QtCore.pyqtSlot()
+    def downloadFileOnEnd(self):
+        self.unfreezeControls()
+
+    @QtCore.pyqtSlot()
     def goBackPushButtonAction(self):
+        self.freezeControls()
         try:
             self.ftp_conn.cwd('..')
             self.currentFolderLineEdit.setText(self.ftp_conn.pwd())
@@ -233,6 +265,8 @@ class FtpClientTabWidget(QtWidgets.QWidget):
             msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
             answer = msg.exec_()
             self.erase_myself()
+
+        self.unfreezeControls()
 
     def erase_myself(self):
         self.container.removeTab(self.container.currentIndex())

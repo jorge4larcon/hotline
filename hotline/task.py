@@ -99,12 +99,14 @@ class StartFtpClientConnectionThread(QtCore.QRunnable):
 
 
 class UploadFileSignals(QtCore.QObject):
-    # host, port, filename
+    # host, port, filename  <<< When you should freeze actions
     on_start = QtCore.pyqtSignal(str, int, str)
     # host, port, filename, exception
     on_error = QtCore.pyqtSignal(str, int, str, 'PyQt_PyObject')
     # host, port, filename
     on_finished = QtCore.pyqtSignal(str, int, str)
+    # When you should unfreeze actions
+    on_end = QtCore.pyqtSignal()
 
 
 class UploadFileThread(QtCore.QRunnable):
@@ -123,6 +125,8 @@ class UploadFileThread(QtCore.QRunnable):
             self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
         else:
             self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+        finally:
+            self.signals.on_end.emit()
 
 
 class DownloadFileSignals(QtCore.QObject):
@@ -132,6 +136,7 @@ class DownloadFileSignals(QtCore.QObject):
     on_error = QtCore.pyqtSignal(str, int, str, 'PyQt_PyObject')
     # host, port, filename
     on_finished = QtCore.pyqtSignal(str, int, str)
+    on_end = QtCore.pyqtSignal()
 
 
 class DownloadFileThread(QtCore.QRunnable):
@@ -153,6 +158,8 @@ class DownloadFileThread(QtCore.QRunnable):
             self.signals.on_error.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename, e)
         else:
             self.signals.on_finished.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
+        finally:
+            self.signals.on_end.emit()
 
 
 class SignUpRequestSiganls(QtCore.QObject):
