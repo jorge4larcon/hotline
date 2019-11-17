@@ -20,8 +20,8 @@ def setup_network_information():
 
 def configure_logging(level):
     logging.basicConfig(
-        format='[%(asctime)s] [thread-id=%(thread)d] [thread-name=%(threadName)s] %(levelname)s: %(message)s',
-        # format='[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+        # format='[%(asctime)s] [thread-id=%(thread)d] [thread-name=%(threadName)s] %(levelname)s: %(message)s',
+        format='[%(asctime)s] p%(process)s {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
         level=level)
 
 
@@ -92,7 +92,8 @@ def network_interface(ipv4):
 
 
 def mac_address(iface):
-    return netifaces.ifaddresses(iface).get(netifaces.AF_LINK)[0].get('addr')
+    mac = netifaces.ifaddresses(iface).get(netifaces.AF_LINK)[0].get('addr')
+    return f"{mac[0:2]}{mac[3:5]}.{mac[6:8]}{mac[9:11]}.{mac[12:14]}{mac[15:]}"
 
 
 if __name__ == '__main__':

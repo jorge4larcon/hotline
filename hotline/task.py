@@ -34,7 +34,7 @@ class GetContactInformationForChatThread(QtCore.QRunnable):
 
     def run(self) -> None:
         try:
-            result = asyncio.run(inbox.get_contact_information(self.ip, self.port, self.timeout))
+            result = asyncio.run(inbox.get_contact_information(self.remote_ip, self.remote_ip))
         except Exception as e:
             self.signals.on_error.emit(self.remote_name, e)
         else:

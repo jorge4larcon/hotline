@@ -1048,9 +1048,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             for row in range(self.contactsTableWidget.rowCount()):
                 if self.contactsTableWidget.item(row, 1).text() == msginfo['mac_address']:
                     if msginfo['ipv'] == 6:
-                        self.contactsTableWidget.item(row, 2).setText(msginfo['ipv4_add'])
+                        self.contactsTableWidget.item(row, 3).setText(msginfo['ip'])
                     elif msginfo['ipv'] == 4:
-                        self.contactsTableWidget.item(row, 2).setText(msginfo['ipv4_add'])
+                        self.contactsTableWidget.item(row, 2).setText(msginfo['ip'])
 
                     break
 
@@ -1190,11 +1190,38 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             if ip_version == 4:
                 logging.info(
                     f"Trying to send the message to {remote_name} {remote_mac} by IPv6 {remote_ip6}")
+
+                if not remote_ip6:
+                    remote_ip6 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
+                    logging.info(
+                        f"Contact {remote_name} {remote_mac} has not an IPv6, generating one ({remote_ip6})"
+                    )
+
                 sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name, local_mac, message, port)
                 sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
                 sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
                 sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
                 self.threadPool.start(sendMessageThread)
+
+            elif ip_version == 6:
+                new_remote_ip6 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
+                if remote_ip6 != new_remote_ip6:
+                    logging.info(f"Trying to send the message to {remote_name} {remote_mac} by IPv6 Link Local EUI-64 {new_remote_ip6}")
+                    sendMessageThread = inbox.SendMessageThread(remote_ip4, new_remote_ip6, 6, remote_mac, remote_name, local_mac, message, port)
+                    sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
+                    sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
+                    sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
+                    self.threadPool.start(sendMessageThread)
+                else:
+                    logging.info(f'We could not send the message to {remote_name} {remote_mac}, not by IPv4, IPv6 or IPv6 Link Local EUI-64')
+                    msg = QtWidgets.QMessageBox(self)
+                    msg.setIcon(QtWidgets.QMessageBox.Critical)
+                    msg.setWindowTitle('Error')
+                    name = self.chatGroupBox.title()
+                    msg.setText(f"Could not send message to {name}")
+                    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                    msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                    answer = msg.exec_()
             else:
                 logging.info(f'We could not send the message to {remote_name} {remote_mac}, not by IPv4 or IPv6')
                 msg = QtWidgets.QMessageBox(self)
@@ -1270,7 +1297,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     self.contactsTableWidget.item(row, 2).setText(contact_info.get('ipv4_address'))
                     self.contactsTableWidget.item(row, 3).setText(contact_info.get('ipv6_address'))
                     self.contactsTableWidget.cellWidget(row, 4).setValue(contact_info.get('inbox_port'))
-                    self.contactsTableWidget.cellWidget(row, 4).setValue(contact_info.get('ftp_port'))
+                    self.contactsTableWidget.cellWidget(row, 5).setValue(contact_info.get('ftp_port'))
                     break
             logging.info(f"We have updated the information of {remote_name} {remote_mac} by using the information requested")
             lastAttemp = inbox.LastAttempSendMessageThread(
@@ -1301,7 +1328,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot(str, 'PyQt_PyObject')
     def lastAttempOnError(self, remote_name, e):
-        logging.info(f"The message could not be sent to {remote_mac} even in the last attemp")
+        logging.info(f"The message could not be sent to {remote_name} even in the last attemp")
         msg = QtWidgets.QMessageBox(self)
         msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setWindowTitle('Error')
@@ -1327,9 +1354,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         name = text[0]
         mac_address = text[1]
 
-        if mac_address == self.chatMateMacAddressLabel.text():
-            logging.info('The conversation is opened, do nothing')
-            return
+        # if mac_address == self.chatMateMacAddressLabel.text():
+        #     logging.info('The conversation is opened, update the messages')
+        #     self.
+        #     return
 
         self.chatTextEdit.setText('')
         logging.info(f"Opening conversation with '{name}' '{mac_address}'")

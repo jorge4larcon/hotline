@@ -302,23 +302,32 @@ class InboxServerProtocol(asyncio.Protocol):
                     if mac_address == request['receiver']:
                         try:
                             conn = dbfunctions.get_connection()
-                            exists = dbfunctions.get_contact(conn, request['sender'], 'name')
+                            try:
+                                exists = dbfunctions.get_contact(conn, request['sender'], 'name')
+                            except Exception as e:
+                                exists = False
+                            else:
+                                exists = True
+
                             is_stranger = False
                             if not exists:
+                                logging.info(f"The contact {request['sender']} does not exist, adding him to db")
                                 is_stranger = True
                                 if peer_address:
                                     if peer_family == socket.AF_INET:
                                         dbfunctions.insert_contact(conn, request['sender'], name='Stranger',
                                                                    ipv4_address=peer_address)
+                                        logging.info(f"The contact {request['sender']} was added")
                                     elif peer_family == socket.AF_INET6:
                                         dbfunctions.insert_contact(conn, request['sender'], name='Stranger',
                                                                    ipv6_address=peer_address)
+                                        logging.info(f"The contact {request['sender']} was added")
                                     else:
                                         dbfunctions.insert_contact(conn, request['sender'], name='Stranger')
+                                        logging.info(f"The contact {request['sender']} was added")
                                 else:
                                     dbfunctions.insert_contact(conn, request['sender'], name='Stranger')
-
-                            # TODO: After adding or not the contact its a good idead to update its ip address in the database
+                                    logging.info(f"The contact {request['sender']} was added")
 
                             ipv = None
                             if peer_address:
@@ -461,4 +470,4 @@ class LastAttempSendMessageThread(QtCore.QRunnable):
         except Exception as e:
             self.signals.on_error.emit(self.remote_name, e)
         else:
-            self.signals.on_received_confirmation(self.remote_mac, recv_conf)
+            self.signals.on_received_confirmation.emit(self.remote_mac, recv_conf)
