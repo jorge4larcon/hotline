@@ -1035,7 +1035,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         # If the contact was a stranger, he was added to contacts and the ip information has been updated in the
         # database, so if its the current user of the chat update the messages, and if its not an stranger, update the info
         # in the table
-
         if msginfo['is_stranger']:  # Add him to the contacts table and the first chat is going to be him
             conn = dbfunctions.get_connection()
             name, ip4, ip6, inbox_p, ftp_p = dbfunctions.get_contact(conn, msginfo['mac_address'], 'name',
@@ -1047,6 +1046,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         else:  # Update the contacts table, and if he is the active chat, update the messages
             for row in range(self.contactsTableWidget.rowCount()):
                 if self.contactsTableWidget.item(row, 1).text() == msginfo['mac_address']:
+                    name = self.contactsTableWidget.item(row, 0).text()
                     if msginfo['ipv'] == 6:
                         self.contactsTableWidget.item(row, 3).setText(msginfo['ip'])
                     elif msginfo['ipv'] == 4:
@@ -1059,6 +1059,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == msginfo["mac_address"]:
                         self.conversationsTableWidget.cellClicked.emit(row, 0)
                         break
+
+        # Notify the user
+        if self.chatMateMacAddressLabel.text() == msginfo["mac_address"] and self.tabWidget.currentIndex() == 0:
+            pass
+        else:
+            self.addNotificationToNotificationsTable(f'You have new messages from {name} {msginfo["mac_address"]}')
 
     @QtCore.pyqtSlot(str)
     def inboxServerThreadOnGetContactInformation(self, remote_ip):
@@ -1077,6 +1083,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.downloadsTabWidget.removeTab(index)
 
     def setupChatsTab(self):
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.chatTextEdit.setFont(font)
         self.chatGroupBox.setTitle('')
         self.chatMateMacAddressLabel.setText('')
         self.chatMateFilesPushButton.clicked.connect(self.start_ftp_client_connection_fast)
@@ -1392,11 +1401,13 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         text = ''
         for message in reversed(messages):
             if message['type'] == 'received':
-                text = f"S[{message['sent_timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
+                text = f"{message['name']}: {message['content']}"
+                # text = f"S[{message['sent_timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
                 # text += f"""<b>R[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
 
             else:
-                text = f"S[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['received_timestamp'].strftime('%b %d %Y %I:%M %p')}] Me: {message['content']}"
+                text = f"Me: {message['content']}"
+                # text = f"S[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['received_timestamp'].strftime('%b %d %Y %I:%M %p')}] Me: {message['content']}"
                 # text += f"""<b>S[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
 
             self.chatTextEdit.append(text)
