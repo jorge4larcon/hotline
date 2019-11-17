@@ -1126,6 +1126,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.setupConversationsTable()
         self.loadConversationsTable()
         self.sendMessagePushButton.clicked.connect(self.sendMessagePushButtonAction)
+        self.messageLineEdit.returnPressed.connect(self.sendMessagePushButtonAction)
 
     def setupContactsTab(self):
         self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
@@ -1159,6 +1160,16 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def sendMessagePushButtonAction(self):
         message = self.messageLineEdit.text().strip()
         if not message:
+            return
+
+        if len(message) > 10240:
+            msg = QtWidgets.QMessageBox(self)
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            msg.setWindowTitle('Error')
+            msg.setText(f"The message is too large to be sent")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+            answer = msg.exec_()
             return
 
         remote_mac = self.chatMateMacAddressLabel.text()
