@@ -1077,6 +1077,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.downloadsTabWidget.removeTab(index)
 
     def setupChatsTab(self):
+        self.chatGroupBox.setTitle('')
+        self.chatMateMacAddressLabel.setText('')
+        self.chatMateFilesPushButton.clicked.connect(self.start_ftp_client_connection_fast)
         self.setupConversationsTable()
         self.loadConversationsTable()
         self.sendMessagePushButton.clicked.connect(self.sendMessagePushButtonAction)
@@ -2099,6 +2102,54 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
 
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
+
+    @QtCore.pyqtSlot()
+    def start_ftp_client_connection_fast(self):
+        btn = self.sender()
+        if btn:
+            mac = self.chatMateMacAddressLabel.text()
+            conn = dbfunctions.get_connection()
+            ip4, ip6, port = dbfunctions.get_contact(conn, mac, 'ipv4_address', 'ipv6_address', 'ftp_port')
+            conn.close()
+
+            ip = ip4 if ip4 else ip6
+
+            if not ip:
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Question)
+                msg.setWindowTitle('Not enought information')
+                msg.setText("This user doesn't have an IP address")
+                msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+                answer = msg.exec_()
+                if answer == QtWidgets.QMessageBox.Yes:
+                    logging.info('User said yes to IPv6')
+                    ipv6 = configuration.generate_ipv6_linklocal_eui64_address(mac)
+
+                    for row in range(self.contactsTableWidget.rowCount()):
+                        if self.contactsTableWidget.item(row, 1).text() == mac:
+                            self.contactsTableWidget.item(row, 3).setText(ipv6)
+                            break
+
+                    gcir = task.GetContactInformationThread(ipv6, 42000, 3)
+                    gcir.signals.on_finished.connect(self.getContactInfoForFtpConnectionOnFinished)
+                    gcir.signals.on_result.connect(self.getContactInfoForFtpConnectionOnResult)
+                    gcir.signals.on_error.connect(self.getContactInfoForFtpConnectionOnError)
+                    self.threadPool.start(gcir)
+                    logging.info('GetContactInformation started')
+
+                else:
+                    logging.info('User refused to use IPv6')
+                    msg = QtWidgets.QMessageBox(
+                        QtWidgets.QMessageBox.Critical,
+                        'Error',
+                        f"Cannot start FTP connection because the contact has not an IP address",
+                        QtWidgets.QMessageBox.Ok
+                    )
+                    answer = msg.exec_()
+            else:
+                self.startFtpClientConnection(ip, port)
 
     @QtCore.pyqtSlot()
     def start_ftp_client_connection(self):
