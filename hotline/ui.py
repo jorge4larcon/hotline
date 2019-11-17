@@ -1177,13 +1177,22 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def sendMessageThreadOnSent(self, remote_mac, remote_ip):
         pass
 
-    @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, dict)
-    def sendMessageThreadOnReceivedConfirmation(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, recv_confirmation):
+    @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, dict, str)
+    def sendMessageThreadOnReceivedConfirmation(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, recv_confirmation, sent_timestamp):
         if remote_mac == recv_confirmation.get('receiver'):
             logging.info(f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} match, we sent the message correctly")
+
             ########## THE MESSAGE WAS SENT
-            ##########
-            pass
+            conn = dbfunctions.get_connection()
+            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_confirmation['received_timestamp'])
+            conn.close()
+
+            if self.chatMateMacAddressLabel == remote_mac:
+                for row in range(self.conversationsTableWidget.rowCount()):
+                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
+                        self.conversationsTableWidget.cellClicked.emit(row, 0)
+                        break
+
         else:
             logging.info(
                 f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} doesn't match, we could not send the message")
@@ -1317,13 +1326,20 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
             answer = msg.exec_()
 
-    @QtCore.pyqtSlot(str, dict)
-    def lastAttempOnReceivedConfirmation(self, remote_mac, recv_conf):
+    @QtCore.pyqtSlot(str, dict, str, str)
+    def lastAttempOnReceivedConfirmation(self, remote_mac, recv_conf, sent_timestamp, message):
         if remote_mac == recv_conf.get('receiver'):
             logging.info(f"The message was succesfully sent to {remote_mac} in the last attemp")
-            ############
             ########### THE MESSAGE WAS SENT
-            ########### TODO
+            conn = dbfunctions.get_connection()
+            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_conf['received_timestamp'])
+            conn.close()
+
+            if self.chatMateMacAddressLabel == remote_mac:
+                for row in range(self.conversationsTableWidget.rowCount()):
+                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
+                        self.conversationsTableWidget.cellClicked.emit(row, 0)
+                        break
 
 
     @QtCore.pyqtSlot(str, 'PyQt_PyObject')
