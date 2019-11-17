@@ -1148,6 +1148,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def setupInterlocutorTab(self):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
+        self.myContactInfoInboxPortSpinBox.setReadOnly(True)
         self.loadInterlocutorConfiguration()
         self.setupInterlocutorTable()
         self.interSignUpPushButton.clicked.connect(self.interSignUpPushButtonAction)
@@ -1493,6 +1494,9 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 for row in range(self.conversationsTableWidget.rowCount()):
                     if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == mac_address:
                         self.conversationsTableWidget.item(row, 0).setText(f"{new_value}\n{mac_address}")
+
+                if self.chatMateMacAddressLabel.text() == mac_address:
+                    self.chatGroupBox.setTitle(new_value)
 
             finally:
                 conn.close()
@@ -2389,6 +2393,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         if not os.path.isdir(folder):
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, 'Select a folder to share')
             logging.info(f"Folder selected: '{folder}'")
+            if not folder:
+                return 
             self.ftpFolderLineEdit.setText(folder)
             self.ftpFolderLineEdit.editingFinished.emit()
 
