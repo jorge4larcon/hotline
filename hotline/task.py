@@ -4,6 +4,8 @@ import asyncio
 import ftplib
 import os
 import inter
+import logging
+import configuration
 
 
 # def recvall(sock: socket.socket, length):
@@ -41,6 +43,124 @@ class GetContactInformationForChatThread(QtCore.QRunnable):
             self.signals.on_result.emit(self.remote_mac, self.local_mac, self.remote_name, self.message, result)
         finally:
             self.signals.on_finished.emit()
+
+
+class RequestContactInformationSignals(QtCore.QObject):
+    on_fail = QtCore.pyqtSignal(str, str)
+    on_success = QtCore.pyqtSignal(dict)
+
+
+class RequestContactInformationThread(QtCore.QRunnable):
+    def __init__(self, ip4, ip6, mac, name, port, inter_server_ip, inter_server_port, inter_server_password,
+                 timeout=3):
+        super(RequestContactInformationThread, self).__init__()
+        self.ip6 = ip6
+        self.ip4 = ip4
+        self.port = port
+        self.name = name
+        self.mac = mac
+        self.ip6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(self.mac)
+        self.timeout = timeout
+        self.inter_server_ip = inter_server_ip
+        self.inter_server_port = inter_server_port
+        self.inter_server_password = inter_server_password
+
+        self.signals = RequestContactInformationSignals()
+
+    def run(self) -> None:
+        if self.ip4 and self.ip6:
+            self.ir_ip4_ip6()
+        elif self.ip4 and not self.ip6:
+            self.ir_ip4_noip6()
+        elif not self.ip4 and self.ip6:
+            self.ir_noip4_ip6()
+        elif not self.ip4 and not self.ip6:
+            self.ir_noip4_noip6()
+
+    def ir_ip4_ip6(self):
+        try:
+            ci = asyncio.run(inbox.get_contact_information(self.ip4, self.port, self.timeout))
+        except Exception as e:
+            self.ir_noip4_ip6()
+        else:
+            if ci['mac_address'] == self.mac:
+                self.signals.on_success.emit(ci)
+            else:
+                self.ir_noip4_ip6()
+
+    def ir_noip4_ip6(self):
+        try:
+            ci = asyncio.run(inbox.get_contact_information(self.ip6, self.port, self.timeout))
+        except Exception as e:
+            if self.ip6lleui64 == self.ip6:
+                if self.inter_server_ip:
+                    self.ir_interlocutor()
+                else:
+                    self.signals.on_fail.emit(self.name, self.mac)
+            else:
+                self.ir_noip4_noip6()
+        else:
+            if ci['mac_address'] == self.mac:
+                self.signals.on_success.emit(ci)
+            else:
+                self.ir_noip4_noip6()
+
+    def ir_ip4_noip6(self):
+        try:
+            ci = asyncio.run(inbox.get_contact_information(self.ip4, self.port, self.timeout))
+        except Exception as e:
+            self.ir_noip4_noip6()
+        else:
+            if ci['mac_address'] == self.mac:
+                self.signals.on_success.emit(ci)
+            else:
+                self.ir_noip4_noip6()
+
+    def ir_noip4_noip6(self):
+        try:
+            ci = asyncio.run(inbox.get_contact_information(self.ip6lleui64, self.port, self.timeout))
+        except Exception as e:
+            if self.inter_server_ip:
+                self.ir_interlocutor()
+            else:
+                self.signals.on_fail.emit(self.name, self.mac)
+        else:
+            if ci['mac_address'] == self.mac:
+                self.signals.on_success.emit(ci)
+            else:
+                if self.inter_server_ip:
+                    self.ir_interlocutor()
+                else:
+                    self.signals.on_fail.emit(self.name, self.mac)
+
+    def ir_interlocutor(self):
+        try:
+            req = inter.get_by_mac(self.mac)
+            ci = asyncio.run(
+                req.send_to(self.inter_server_ip, self.inter_server_port, timeout=self.timeout,
+                            password=self.inter_server_password))
+        except Exception as e:
+            self.signals.on_fail.emit(self.name, self.mac)
+        else:
+            ci = ci.get('client')
+            if ci:
+                try:
+                    ip4 = ci['ipv4_addr']
+                    port = ci['port']
+                except Exception as e:
+                    self.signals.on_fail.emit(self.name, self.mac)
+                else:
+                    try:
+                        ci = asyncio.run(inbox.get_contact_information(ip4, port, self.timeout))
+                    except Exception as e:
+                        self.signals.on_fail.emit(self.name, self.mac)
+                    else:
+                        if ci['mac_address'] == self.mac:
+                            self.signals.on_success.emit(ci)
+                        else:
+                            self.signals.on_fail.emit(self.name, self.mac)
+            else:
+                self.signals.on_fail.emit(self.name, self.mac)
 
 
 class GetContactInformationSignals(QtCore.QObject):

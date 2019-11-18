@@ -5,6 +5,7 @@ import socket
 import datetime
 import valid
 import dbfunctions
+import configuration
 from PyQt5 import QtCore
 
 MAX_BYTES = 4096
@@ -405,7 +406,6 @@ class SendMessageSignals(QtCore.QObject):
     on_sent = QtCore.pyqtSignal(str, str)
 
 
-
 class SendMessageThread(QtCore.QRunnable):
     def __init__(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port):
         super(SendMessageThread, self).__init__()
@@ -432,11 +432,15 @@ class SendMessageThread(QtCore.QRunnable):
                 ip = self.remote_ip6
 
             sent_timestamp = datetime.datetime.now().isoformat()
-            recv_confirmation = asyncio.run(message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
+            recv_confirmation = asyncio.run(
+                message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
         except Exception as e:
-            self.signals.on_error.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac, self.remote_name, self.local_mac, self.message, self.port, e)
+            self.signals.on_error.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac,
+                                       self.remote_name, self.local_mac, self.message, self.port, e)
         else:
-            self.signals.on_received_confirmation.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac, self.remote_name, self.local_mac, self.message, self.port, recv_confirmation, sent_timestamp)
+            self.signals.on_received_confirmation.emit(self.remote_ip4, self.remote_ip6, self.ip_version,
+                                                       self.remote_mac, self.remote_name, self.local_mac, self.message,
+                                                       self.port, recv_confirmation, sent_timestamp)
 
 
 class LastAttempSendMessageSignals(QtCore.QObject):
@@ -466,8 +470,82 @@ class LastAttempSendMessageThread(QtCore.QRunnable):
                 ip = self.remote_ip6
 
             sent_timestamp = datetime.datetime.now().isoformat()
-            recv_conf = asyncio.run(message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
+            recv_conf = asyncio.run(
+                message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
         except Exception as e:
             self.signals.on_error.emit(self.remote_name, e)
         else:
             self.signals.on_received_confirmation.emit(self.remote_mac, recv_conf, sent_timestamp, self.message)
+
+
+class SmartSendMessageSignals(QtCore.QObject):
+    on_fail = QtCore.pyqtSignal()
+    # received_confirmation, sent_timestamp and message
+    on_success = QtCore.pyqtSignal(dict, str, str)
+
+
+class SmartSendMessageThread(QtCore.QRunnable):
+    def __init__(self, ip4, ip6, port, remote_mac, local_mac, inter_ip, inter_port, inter_password, message, timeout=3):
+        super(SmartSendMessageThread, self).__init__()
+        self.port = port
+        self.remote_mac = remote_mac
+        self.local_mac = local_mac
+        self.ip4 = ip4
+        self.ip6 = ip6
+        self.ip6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
+        self.inter_ip = inter_ip
+        self.inter_port = inter_port
+        self.inter_password = inter_password
+        self.did_i_request_info = False
+        self.message = message
+        self.timeout = timeout
+        self.signals = SmartSendMessageSignals()
+
+    def run(self) -> None:
+        if self.ip4 and self.ip6:
+            self.sm_ip4_ip6()
+        elif self.ip4 and not self.ip6:
+            self.sm_ip4_noip6()
+        elif not self.ip4 and self.ip6:
+            self.sm_noip4_ip6()
+        elif not self.ip4 and not self.ip6:
+            self.sm_noip4_noip6()
+
+    def sm_ip4_ip6(self):
+        try:
+            sent_timestamp = datetime.datetime.now().isoformat()
+            recv_conf = asyncio.run(message_to(self.ip4, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
+        except Exception as e:
+            self.sm_noip4_ip6()
+        else:
+            if recv_conf.get('receiver') == self.remote_mac:
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+            else:
+                self.sm_noip4_noip6()
+
+    def sm_noip4_ip6(self):
+        try:
+            sent_timestamp = datetime.datetime.now().isoformat()
+            recv_conf = asyncio.run(message_to(self.ip6, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
+        except Exception as e:
+            self.sm_noip4_noip6()
+        else:
+            if recv_conf.get('receiver') == self.remote_mac:
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+            else:
+                self.sm_noip4_noip6()
+
+    def sm_ip4_noip6(self):
+        try:
+            sent_timestamp = datetime.datetime.now().isoformat()
+            recv_conf = asyncio.run(message_to(self.ip4, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
+        except Exception as e:
+            self.sm_noip4_noip6()
+        else:
+            if recv_conf.get('receiver') == self.remote_mac:
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+            else:
+                self.sm_noip4_noip6()
+
+    def sm_noip4_noip6(self):
+        pass

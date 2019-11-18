@@ -139,7 +139,6 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         logging.info('The upload thread has finished, reactivating buttons')
         self.unfreezeControls()
 
-
     def loadDirContentInFtpServerFilesTable(self):
         self.freezeControls()
         while self.ftpServerFilesTableWidget.rowCount():
@@ -1029,7 +1028,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     def start_inbox_server(self):
         conn = dbfunctions.get_connection()
-        mac, ipv4, ipv6ll, inbox_port = dbfunctions.get_configuration(conn, 'mac_address', 'ipv4_address', 'ipv6_address', 'inbox_port')
+        mac, ipv4, ipv6ll, inbox_port = dbfunctions.get_configuration(conn, 'mac_address', 'ipv4_address',
+                                                                      'ipv6_address', 'inbox_port')
 
         logging.info(f'IPv6 = {ipv6ll} IPv4 = {ipv4}')
 
@@ -1214,7 +1214,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         break
                 logging.info(f'{name} {remote_mac} now has IPv6 Link Local EUI64 address {ipv6ll}')
 
-                sendMessageThread = inbox.SendMessageThread(ipv4, ipv6ll, 6, remote_mac, name, user_mac, message, inbox_p)
+                sendMessageThread = inbox.SendMessageThread(ipv4, ipv6ll, 6, remote_mac, name, user_mac, message,
+                                                            inbox_p)
                 sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
                 sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
                 sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
@@ -1236,13 +1237,16 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         pass
 
     @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, dict, str)
-    def sendMessageThreadOnReceivedConfirmation(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, recv_confirmation, sent_timestamp):
+    def sendMessageThreadOnReceivedConfirmation(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name,
+                                                local_mac, message, port, recv_confirmation, sent_timestamp):
         if remote_mac == recv_confirmation.get('receiver'):
-            logging.info(f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} match, we sent the message correctly")
+            logging.info(
+                f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} match, we sent the message correctly")
 
             ########## THE MESSAGE WAS SENT
             conn = dbfunctions.get_connection()
-            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_confirmation['received_timestamp'])
+            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message,
+                                            recv_confirmation['received_timestamp'])
             conn.close()
 
             if self.chatMateMacAddressLabel.text() == remote_mac:
@@ -1266,7 +1270,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         f"Contact {remote_name} {remote_mac} has not an IPv6, generating one ({remote_ip6})"
                     )
 
-                sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name, local_mac, message, port)
+                sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name,
+                                                            local_mac, message, port)
                 sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
                 sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
                 sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
@@ -1275,14 +1280,18 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             elif ip_version == 6:
                 new_remote_ip6 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
                 if remote_ip6 != new_remote_ip6:
-                    logging.info(f"Trying to send the message to {remote_name} {remote_mac} by IPv6 Link Local EUI-64 {new_remote_ip6}")
-                    sendMessageThread = inbox.SendMessageThread(remote_ip4, new_remote_ip6, 6, remote_mac, remote_name, local_mac, message, port)
+                    logging.info(
+                        f"Trying to send the message to {remote_name} {remote_mac} by IPv6 Link Local EUI-64 {new_remote_ip6}")
+                    sendMessageThread = inbox.SendMessageThread(remote_ip4, new_remote_ip6, 6, remote_mac, remote_name,
+                                                                local_mac, message, port)
                     sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-                    sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
+                    sendMessageThread.signals.on_received_confirmation.connect(
+                        self.sendMessageThreadOnReceivedConfirmation)
                     sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
                     self.threadPool.start(sendMessageThread)
                 else:
-                    logging.info(f'We could not send the message to {remote_name} {remote_mac}, not by IPv4, IPv6 or IPv6 Link Local EUI-64')
+                    logging.info(
+                        f'We could not send the message to {remote_name} {remote_mac}, not by IPv4, IPv6 or IPv6 Link Local EUI-64')
                     msg = QtWidgets.QMessageBox(self)
                     msg.setIcon(QtWidgets.QMessageBox.Critical)
                     msg.setWindowTitle('Error')
@@ -1302,12 +1311,12 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
 
-
     @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, 'PyQt_PyObject')
     def sendMessageThreadOnError(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message,
                                  port, exception):
         if ip_version == 4:
-            logging.info(f"We couldn't send the message to {remote_name} {remote_mac} using IPv4 {remote_ip4}, checking if we have IPv6")
+            logging.info(
+                f"We couldn't send the message to {remote_name} {remote_mac} using IPv4 {remote_ip4}, checking if we have IPv6")
             if remote_ip6:
                 sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name,
                                                             local_mac, message, port)
@@ -1332,7 +1341,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 f"We couldn't send the message to {remote_name} {remote_mac} using IPv6 {remote_ip6}, checking if we can request information")
             ipv6ll = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
             if remote_ip6 == ipv6ll:
-                logging.info(f"The IPv6 Link Local EUI-64 generated to request information is the same as the IPv6 we tried to use to send the message to {remote_name} {remote_mac}, so we can't request information ({ipv6ll})")
+                logging.info(
+                    f"The IPv6 Link Local EUI-64 generated to request information is the same as the IPv6 we tried to use to send the message to {remote_name} {remote_mac}, so we can't request information ({ipv6ll})")
                 msg = QtWidgets.QMessageBox(self)
                 msg.setIcon(QtWidgets.QMessageBox.Critical)
                 msg.setWindowTitle('Error')
@@ -1368,16 +1378,19 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     self.contactsTableWidget.cellWidget(row, 4).setValue(contact_info.get('inbox_port'))
                     self.contactsTableWidget.cellWidget(row, 5).setValue(contact_info.get('ftp_port'))
                     break
-            logging.info(f"We have updated the information of {remote_name} {remote_mac} by using the information requested")
+            logging.info(
+                f"We have updated the information of {remote_name} {remote_mac} by using the information requested")
             lastAttemp = inbox.LastAttempSendMessageThread(
                 contact_info.get('ipv4_address'), contact_info.get('ipv6_address'), 4, contact_info.get('inbox_port'),
                 remote_mac, remote_name, local_mac, message)
             lastAttemp.signals.on_error.connect(self.lastAttempOnError)
             lastAttemp.signals.on_received_confirmation.connect(self.lastAttempOnReceivedConfirmation)
-            logging.info(f"Last attemp to send the message to {remote_name} {remote_mac} by using the new IPv4 {contact_info.get('ipv4_address')} or the new IPv6 {contact_info.get('ipv6_address')}")
+            logging.info(
+                f"Last attemp to send the message to {remote_name} {remote_mac} by using the new IPv4 {contact_info.get('ipv4_address')} or the new IPv6 {contact_info.get('ipv6_address')}")
             self.threadPool.start(lastAttemp)
         else:
-            logging.info(f"We requested information to {remote_name} {remote_mac}, but {contact_info.get('name')} {contact_info.get('mac_address')} reply, so we could not sen the message ")
+            logging.info(
+                f"We requested information to {remote_name} {remote_mac}, but {contact_info.get('name')} {contact_info.get('mac_address')} reply, so we could not sen the message ")
             msg = QtWidgets.QMessageBox(self)
             msg.setIcon(QtWidgets.QMessageBox.Critical)
             msg.setWindowTitle('Error')
@@ -1402,7 +1415,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         break
 
             self.messageLineEdit.setText('')
-
 
     @QtCore.pyqtSlot(str, 'PyQt_PyObject')
     def lastAttempOnError(self, remote_name, e):
@@ -2070,7 +2082,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     def setupContactsTable(self):
         contactsTableHeaders = ['Name', 'MAC address', 'IPv4 address', 'IPv6 address',
-                                'Inbox port', 'FTP port', 'CHAT', 'FILES', 'DELETE']
+                                'Inbox port', 'FTP port', 'CHAT', 'FILES', 'UPDATE', 'DELETE']
         self.contactsTableWidget.setColumnCount(len(contactsTableHeaders))
         self.contactsTableWidget.setHorizontalHeaderLabels(contactsTableHeaders)
         contactsTableHeader = self.contactsTableWidget.horizontalHeader()
@@ -2119,9 +2131,15 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             files_btn.clicked.connect(self.start_ftp_client_connection)
             self.contactsTableWidget.setCellWidget(row, 7, files_btn)
             delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+
+            update_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+            update_btn.setText('Update')
+            update_btn.clicked.connect(self.start_information_request)
+            self.contactsTableWidget.setCellWidget(row, 8, update_btn)
+
             delete_btn.setText('Delete')
             delete_btn.clicked.connect(self.delete_contact_row)
-            self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
+            self.contactsTableWidget.setCellWidget(row, 9, delete_btn)
 
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
 
@@ -2163,11 +2181,72 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         files_btn.clicked.connect(self.start_ftp_client_connection)
         self.contactsTableWidget.setCellWidget(row, 7, files_btn)
         delete_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+
+        update_btn = QtWidgets.QPushButton(self.contactsTableWidget)
+        update_btn.setText('Update')
+        update_btn.clicked.connect(self.start_information_request)
+        self.contactsTableWidget.setCellWidget(row, 8, update_btn)
+
         delete_btn.setText('Delete')
         delete_btn.clicked.connect(self.delete_contact_row)
-        self.contactsTableWidget.setCellWidget(row, 8, delete_btn)
+        self.contactsTableWidget.setCellWidget(row, 9, delete_btn)
 
         self.contactsTableWidget.cellChanged.connect(self.update_contact_from_table_cell)
+
+    @QtCore.pyqtSlot()
+    def start_information_request(self):
+        btn = self.sender()
+        if btn:
+            row = self.contactsTableWidget.indexAt(btn.pos()).row()
+            name = self.contactsTableWidget.item(row, 0).text()
+            mac = self.contactsTableWidget.item(row, 1).text()
+            ip4 = self.contactsTableWidget.item(row, 2).text()
+            ip6 = self.contactsTableWidget.item(row, 3).text()
+            port = self.contactsTableWidget.cellWidget(row, 4).value()
+
+            inter_ip = self.interIpAddressLineEdit.text()
+            inter_port = self.interPortSpinBox.value()
+            inter_pass = self.interPasswordLineEdit.text()
+
+            ifreqthread = task.RequestContactInformationThread(ip4, ip6, mac, name, port, inter_ip, inter_port, inter_pass, timeout=2)
+            ifreqthread.signals.on_fail.connect(self.informationRequestOnFail)
+            ifreqthread.signals.on_success.connect(self.informationRequestOnSuccess)
+            self.threadPool.start(ifreqthread)
+
+    @QtCore.pyqtSlot(str, str)
+    def informationRequestOnFail(self, name, mac):
+        logging.info(f'Could not request contact information of {name} {mac}')
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(f'Could not request contact information of {name} {mac}')
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
+
+    @QtCore.pyqtSlot(dict)
+    def informationRequestOnSuccess(self, contact_info):
+        logging.info(
+            f"Contact information succesfully requested of {contact_info.get('name')} {contact_info.get('mac_address')}")
+        print('Algo')
+        for row in range(self.contactsTableWidget.rowCount()):
+            if contact_info.get('mac_address') == self.contactsTableWidget.item(row, 1).text():
+                self.contactsTableWidget.item(row, 2).setText(contact_info.get('ipv4_address'))
+                self.contactsTableWidget.cellWidget(row, 4).setValue(contact_info.get('inbox_port'))
+
+                self.contactsTableWidget.item(row, 3).setText(contact_info.get('ipv6_address'))
+                self.contactsTableWidget.cellWidget(row, 5).setValue(contact_info.get('ftp_port'))
+                success_message = f'{self.contactsTableWidget.item(row, 0).text()} has been updated'
+
+                msg = QtWidgets.QMessageBox(self)
+                msg.setIcon(QtWidgets.QMessageBox.Information)
+                msg.setWindowTitle('Success in life')
+                msg.setText(success_message)
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+                answer = msg.exec_()
+                return
+
 
     @QtCore.pyqtSlot()
     def start_ftp_client_connection_fast(self):
@@ -2744,7 +2823,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 msg = QtWidgets.QMessageBox(self)
                 msg.setIcon(QtWidgets.QMessageBox.Information)
                 msg.setWindowTitle('Information')
-                msg.setText(f"The contact {new_contact['name']} ({new_contact['mac_address']}) aka {self.contactsTableWidget.item(row, 0).text()} ({self.contactsTableWidget.item(row, 1).text()}) has been updated")
+                msg.setText(
+                    f"The contact {new_contact['name']} ({new_contact['mac_address']}) aka {self.contactsTableWidget.item(row, 0).text()} ({self.contactsTableWidget.item(row, 1).text()}) has been updated")
                 msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
