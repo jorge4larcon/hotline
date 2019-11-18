@@ -6,6 +6,7 @@ import datetime
 import valid
 import dbfunctions
 import configuration
+import inter
 from PyQt5 import QtCore
 
 MAX_BYTES = 4096
@@ -479,14 +480,16 @@ class LastAttempSendMessageThread(QtCore.QRunnable):
 
 
 class SmartSendMessageSignals(QtCore.QObject):
-    on_fail = QtCore.pyqtSignal()
-    # received_confirmation, sent_timestamp and message
-    on_success = QtCore.pyqtSignal(dict, str, str)
+    # remote_mac, contact_name
+    on_fail = QtCore.pyqtSignal(str, str)
+    # received_confirmation, sent_timestamp, message, IPv used (4, 6, 6lleui64), contact_information
+    on_success = QtCore.pyqtSignal(dict, str, str, str, dict)
 
 
 class SmartSendMessageThread(QtCore.QRunnable):
-    def __init__(self, ip4, ip6, port, remote_mac, local_mac, inter_ip, inter_port, inter_password, message, timeout=3):
+    def __init__(self, ip4, ip6, port, remote_mac, local_mac, inter_ip, inter_port, inter_password, message, name, timeout=3):
         super(SmartSendMessageThread, self).__init__()
+        self.name = name
         self.port = port
         self.remote_mac = remote_mac
         self.local_mac = local_mac
@@ -496,10 +499,11 @@ class SmartSendMessageThread(QtCore.QRunnable):
         self.inter_ip = inter_ip
         self.inter_port = inter_port
         self.inter_password = inter_password
-        self.did_i_request_info = False
+        self.i_requested_info_before = False
         self.message = message
         self.timeout = timeout
         self.signals = SmartSendMessageSignals()
+        self.new_contact_info = None
 
     def run(self) -> None:
         if self.ip4 and self.ip6:
@@ -519,9 +523,9 @@ class SmartSendMessageThread(QtCore.QRunnable):
             self.sm_noip4_ip6()
         else:
             if recv_conf.get('receiver') == self.remote_mac:
-                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '4', self.new_contact_info)
             else:
-                self.sm_noip4_noip6()
+                self.req_information()
 
     def sm_noip4_ip6(self):
         try:
@@ -531,9 +535,11 @@ class SmartSendMessageThread(QtCore.QRunnable):
             self.sm_noip4_noip6()
         else:
             if recv_conf.get('receiver') == self.remote_mac:
-                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '6', self.new_contact_info)
+                # Avisa que la IPv4 deberia ser eliminada
+                # Recurrí a IPv4, IPv6 , solo la ultima funciono, por lo tanto deberias eliminar la IPv4
             else:
-                self.sm_noip4_noip6()
+                self.req_information()
 
     def sm_ip4_noip6(self):
         try:
@@ -543,9 +549,75 @@ class SmartSendMessageThread(QtCore.QRunnable):
             self.sm_noip4_noip6()
         else:
             if recv_conf.get('receiver') == self.remote_mac:
-                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message)
+                self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '4', self.new_contact_info)
             else:
-                self.sm_noip4_noip6()
+                self.req_information()
 
     def sm_noip4_noip6(self):
-        pass
+        if self.ip6 == self.ip6lleui64:
+            self.req_information()
+        else:
+            try:
+                sent_timestamp = datetime.datetime.now().isoformat()
+                recv_conf = asyncio.run(
+                    message_to(self.ip6lleui64, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port,
+                               self.timeout))
+            except Exception as e:
+                self.req_information()
+            else:
+                if recv_conf.get('receiver') == self.remote_mac:
+                    self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '6lleui64', self.new_contact_info)
+                    # Recurrí a IPv4, IPv6 e IPv6 LL, solo la ultima funciono, por lo tanto deberias actualizar
+                    # la ipv6 y eliminar la IPv4
+                else:
+                    self.req_information()
+
+    def req_information(self):
+        # Ive tried with IPv4, IPv6 and IPv6 LL EUI-64 and no one has worked.
+        # Im going to ask for information to the Interlocutor
+        if self.i_requested_info_before:
+            self.signals.on_fail.emit(self.remote_mac, self.name)
+        else:
+            self.i_requested_info_before = True
+            try:
+                req = inter.get_by_mac(self.remote_mac)
+                ci = asyncio.run(
+                    req.send_to(self.inter_ip, self.inter_port, timeout=self.timeout, password=self.inter_password))
+            except Exception as e:
+                self.signals.on_fail.emit(self.name, self.remote_mac)
+            else:
+                ci = ci.get('client')
+                if ci:
+                    try:
+                        ip4 = ci['ipv4_addr']
+                        port = ci['port']
+                    except Exception as e:
+                        self.signals.on_fail.emit(self.name, self.remote_mac)
+                    else:
+                        if ip4 == self.ip4 and port == self.port:
+                            self.signals.on_fail.emit(self.name, self.remote_mac)
+                        else:
+                            try:
+                                ci = asyncio.run(get_contact_information(ip4, port, self.timeout))
+                            except Exception as e:
+                                self.signals.on_fail.emit(self.name, self.remote_mac)
+                            else:
+                                if ci['mac_address'] == self.remote_mac:
+                                    try:
+                                        self.ip4 = ci['ipv4_address']
+                                        self.ip6 = ci['ipv6_address']
+                                        self.port = ci['inbox_port']
+                                        if self.ip4 and self.ip6:
+                                            self.sm_ip4_ip6()
+                                        elif self.ip4 and not self.ip6:
+                                            self.sm_ip4_noip6()
+                                        elif not self.ip4 and self.ip6:
+                                            self.sm_noip4_ip6()
+                                        elif not self.ip4 and not self.ip6:
+                                            self.sm_noip4_noip6()
+                                    except Exception as e:
+                                        self.signals.on_fail.emit(self.name, self.remote_mac)
+                                else:
+                                    self.signals.on_fail.emit(self.name, self.remote_mac)
+                else:
+                    self.signals.on_fail.emit(self.name, self.remote_mac)

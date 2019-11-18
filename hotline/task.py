@@ -150,15 +150,18 @@ class RequestContactInformationThread(QtCore.QRunnable):
                 except Exception as e:
                     self.signals.on_fail.emit(self.name, self.mac)
                 else:
-                    try:
-                        ci = asyncio.run(inbox.get_contact_information(ip4, port, self.timeout))
-                    except Exception as e:
+                    if ip4 == self.ip4 and port == self.port:
                         self.signals.on_fail.emit(self.name, self.mac)
                     else:
-                        if ci['mac_address'] == self.mac:
-                            self.signals.on_success.emit(ci)
-                        else:
+                        try:
+                            ci = asyncio.run(inbox.get_contact_information(ip4, port, self.timeout))
+                        except Exception as e:
                             self.signals.on_fail.emit(self.name, self.mac)
+                        else:
+                            if ci['mac_address'] == self.mac:
+                                self.signals.on_success.emit(ci)
+                            else:
+                                self.signals.on_fail.emit(self.name, self.mac)
             else:
                 self.signals.on_fail.emit(self.name, self.mac)
 
