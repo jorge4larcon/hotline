@@ -31,6 +31,11 @@ def bundled_database_path(file):
     return os.path.join(bundle_dir, 'hotline.db')
 
 
+def bundled_icon_path(file):
+    bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(file)))
+    return os.path.join(bundle_dir, 'hotline.ico')
+
+
 def debug_database_path():
     return os.path.join('../resources', 'hotline.db')
 

@@ -1491,11 +1491,17 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                     return
             else:
                 logging.info(f"New value '{new_value}' for field 'name' for user '{mac_address}'")
+                row_position = -1
                 for row in range(self.conversationsTableWidget.rowCount()):
                     if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == mac_address:
                         self.conversationsTableWidget.item(row, 0).setText(f"{new_value}\n{mac_address}")
+                        row_position = row
+                        break
 
                 if self.chatMateMacAddressLabel.text() == mac_address:
+                    if row_position != -1:
+                        self.conversationsTableWidget.cellClicked.emit(row_position, 0)
+
                     self.chatGroupBox.setTitle(new_value)
 
             finally:
