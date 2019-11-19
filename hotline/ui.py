@@ -29,6 +29,7 @@ import task
 import ftplib
 import knownpaths
 import inbox
+from socket import gethostname
 
 
 class FtpClientTabWidget(QtWidgets.QWidget):
@@ -1667,7 +1668,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         inter_password = inter_pass if inter_pass is not None else 'secret'
         ipv4 = ipv4 if ipv4 else 'Could not obtain your IP address'
         mac_address = mac_address if mac_address else 'Could not obtain your MAC address'
-        username = username if username else 'Muhammad'
+        if not username or not valid.is_name(username):
+            try:
+                username = gethostname()
+                valid.is_name(username, exception=True)
+            except Exception as e:
+                logging.error(e)
+                username = 'Muhammad'
+
         get_only_by_mac = bool(get_only_by_mac)
         self.interIpAddressLineEdit.setText(inter_address)
         self.interPortSpinBox.setValue(inter_port)
