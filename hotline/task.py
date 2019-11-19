@@ -68,6 +68,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
         self.signals = RequestContactInformationSignals()
 
     def run(self) -> None:
+        logging.info(f"Requesting information to {self.name} {self.mac}")
         if self.ip4 and self.ip6:
             self.ir_ip4_ip6()
         elif self.ip4 and not self.ip6:
@@ -78,91 +79,130 @@ class RequestContactInformationThread(QtCore.QRunnable):
             self.ir_noip4_noip6()
 
     def ir_ip4_ip6(self):
+        logging.info(f"{self.name} has IPv4 and IPv6 address")
         try:
+            logging.info(f"Requesting information to {self.name} using {self.ip4}")
             ci = asyncio.run(inbox.get_contact_information(self.ip4, self.port, self.timeout))
         except Exception as e:
+            logging.info(f'Information request failed')
             self.ir_noip4_ip6()
         else:
             if ci['mac_address'] == self.mac:
+                logging.info('Information request succeeded')
                 self.signals.on_success.emit(ci)
             else:
+                logging.info(f'Unexpected user replied to the information request')
                 self.ir_noip4_ip6()
 
     def ir_noip4_ip6(self):
+        logging.info(f"{self.name} has IPv6 address")
         try:
+            logging.info(f"Requesting information to {self.name} using {self.ip6}")
             ci = asyncio.run(inbox.get_contact_information(self.ip6, self.port, self.timeout))
         except Exception as e:
+            logging.info('Information request failed, generating IPv6 Link Local EUI-64 address')
             if self.ip6lleui64 == self.ip6:
+                logging.info('The IPv6 Link Local EUI-64 address is the same as the IPv6 address used')
                 if self.inter_server_ip:
+                    logging.info('Interlocutor address provided, requesting contact information to the server')
                     self.ir_interlocutor()
                 else:
+                    logging.info('Could not obtain the contact information')
                     self.signals.on_fail.emit(self.name, self.mac)
             else:
+                logging.info('Trying to request information using IPv6 Link Local EUI-64 address')
                 self.ir_noip4_noip6()
         else:
             if ci['mac_address'] == self.mac:
+                logging.info('Information request succeeded')
                 self.signals.on_success.emit(ci)
             else:
+                logging.info(f'Unexpected user replied to the information request')
                 self.ir_noip4_noip6()
 
     def ir_ip4_noip6(self):
+        logging.info(f"{self.name} has IPv4 address")
         try:
+            logging.info(f"Requesting information to {self.name} using {self.ip4}")
             ci = asyncio.run(inbox.get_contact_information(self.ip4, self.port, self.timeout))
         except Exception as e:
+            logging.info('Information request failed')
             self.ir_noip4_noip6()
         else:
             if ci['mac_address'] == self.mac:
+                logging.info('Information request succeeded')
                 self.signals.on_success.emit(ci)
             else:
+                logging.info(f'Unexpected user replied to the information request')
                 self.ir_noip4_noip6()
 
     def ir_noip4_noip6(self):
         try:
+            logging.info(f"Requesting contact information using IPv6 Link Local EUI-64 address...")
             ci = asyncio.run(inbox.get_contact_information(self.ip6lleui64, self.port, self.timeout))
         except Exception as e:
+            logging.info('Information request failed')
             if self.inter_server_ip:
+                logging.info('Interlocutor address provided, requesting contact information to the server')
                 self.ir_interlocutor()
             else:
+                logging.info('Could not obtain the contact information')
                 self.signals.on_fail.emit(self.name, self.mac)
         else:
             if ci['mac_address'] == self.mac:
+                logging.info('Information request succeeded')
                 self.signals.on_success.emit(ci)
             else:
+                logging.info(f'Unexpected user replied to the information request')
                 if self.inter_server_ip:
+                    logging.info('Interlocutor address provided, requesting contact information to the server')
                     self.ir_interlocutor()
                 else:
+                    logging.info('Could not obtain the contact information')
                     self.signals.on_fail.emit(self.name, self.mac)
 
     def ir_interlocutor(self):
         try:
+            logging.info(f"Sending a 'GET by MAC' request to the Interlocutor server {self.inter_server_ip}:{self.inter_server_port}")
             req = inter.get_by_mac(self.mac)
             ci = asyncio.run(
                 req.send_to(self.inter_server_ip, self.inter_server_port, timeout=self.timeout,
                             password=self.inter_server_password))
         except Exception as e:
+            logging.info('Could not obtain the contact information')
             self.signals.on_fail.emit(self.name, self.mac)
         else:
+            logging.info(f"'GET by MAC' request succeeded")
             ci = ci.get('client')
             if ci:
                 try:
                     ip4 = ci['ipv4_addr']
                     port = ci['port']
+                    logging.info(f'Interlocutor suggested the address: {ip4}:{port}')
                 except Exception as e:
+                    logging.info('Could not obtain the contact information')
                     self.signals.on_fail.emit(self.name, self.mac)
                 else:
                     if ip4 == self.ip4 and port == self.port:
+                        logging.info('The Interlocutor suggested an address that was tested, but did not work')
+                        logging.info('Could not obtain the contact information')
                         self.signals.on_fail.emit(self.name, self.mac)
                     else:
                         try:
+                            logging.info('Requesting contact information with the address provided')
                             ci = asyncio.run(inbox.get_contact_information(ip4, port, self.timeout))
                         except Exception as e:
+                            logging.info('Could not obtain the contact information')
                             self.signals.on_fail.emit(self.name, self.mac)
                         else:
                             if ci['mac_address'] == self.mac:
+                                logging.info('Information request succeeded')
                                 self.signals.on_success.emit(ci)
                             else:
+                                logging.info('Could not obtain the contact information')
                                 self.signals.on_fail.emit(self.name, self.mac)
             else:
+                logging.info('Could not obtain the contact information')
                 self.signals.on_fail.emit(self.name, self.mac)
 
 

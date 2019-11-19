@@ -1148,11 +1148,23 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def setupInterlocutorTab(self):
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
-        self.myContactInfoInboxPortSpinBox.setReadOnly(True)
+        self.myContactInfoInboxPortSpinBox.editingFinished.connect(self.userChangedTheInboxPort)
         self.loadInterlocutorConfiguration()
         self.setupInterlocutorTable()
         self.interSignUpPushButton.clicked.connect(self.interSignUpPushButtonAction)
         self.interSearchPushButton.clicked.connect(self.interSearchPushButtonAction)
+
+    @QtCore.pyqtSlot()
+    def userChangedTheInboxPort(self):
+        self.myContactInfoInboxPortSpinBox.blockSignals(True)
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setWindowTitle('Information')
+        msg.setText(f"After changing this value, you must restart the application, otherwise changes won't be applied. If you didn't changed it, you can continue using the app normally.")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
+        self.myContactInfoInboxPortSpinBox.blockSignals(False)
 
     def setupNotificationsTab(self):
         self.setupNotificationsTable()
@@ -1225,6 +1237,15 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
                     self.contactsTableWidget.cellWidget(row, 4).setValue(contact_information['inbox_port'])
                     self.contactsTableWidget.cellWidget(row, 5).setValue(contact_information['ftp_port'])
+
+                    conn = dbfunctions.get_connection()
+                    dbfunctions.update_contact(
+                        conn,
+                        received_confirmation['receiver'],
+                        inbox_port=contact_information['inbox_port'],
+                        ftp_port=contact_information['ftp_port']
+                    )
+                    conn.close()
                     break
         else:
             for row in range(self.contactsTableWidget.rowCount()):
