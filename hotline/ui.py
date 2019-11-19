@@ -1160,6 +1160,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     @QtCore.pyqtSlot()
     def sendMessagePushButtonAction(self):
         message = self.messageLineEdit.text().strip()
+        message = message.replace('"', "'")
         if not message:
             return
 
@@ -1179,264 +1180,73 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                                                             'inbox_port', 'name')
         user_mac = dbfunctions.get_configuration(conn, 'mac_address')
         conn.close()
-        if ipv4:
-            sendMessageThread = inbox.SendMessageThread(ipv4, ipv6, 4, remote_mac, name, user_mac, message, inbox_p)
-            sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-            sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
-            sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-            logging.info(f'Sending a message to {name} {remote_mac} by {ipv4}')
-            self.threadPool.start(sendMessageThread)
-        elif ipv6:
-            sendMessageThread = inbox.SendMessageThread(ipv4, ipv6, 6, remote_mac, name, user_mac, message, inbox_p)
-            sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-            sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
-            sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-            logging.info(f'Sending a message to {name} {remote_mac} by {ipv6}')
-            self.threadPool.start(sendMessageThread)
-        else:
-            logging.info(f'{name} {remote_mac} has not an IP address')
-            msg = QtWidgets.QMessageBox(self)
-            msg.setIcon(QtWidgets.QMessageBox.Critical)
-            msg.setWindowTitle('Error')
-            msg.setText("This user doesn't have an IP address")
-            msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
-            msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-            msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
-            answer = msg.exec_()
-            if answer == QtWidgets.QMessageBox.Yes:
-                ipv6ll = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
-                conn = dbfunctions.get_connection()
-                dbfunctions.update_contact(conn, remote_mac, ipv6_address=ipv6ll)
-                conn.close()
-                for row in range(self.contactsTableWidget.rowCount()):
-                    if remote_mac == self.contactsTableWidget.item(row, 1).text():
-                        self.contactsTableWidget.item(row, 3).setText(ipv6ll)
-                        break
-                logging.info(f'{name} {remote_mac} now has IPv6 Link Local EUI64 address {ipv6ll}')
 
-                sendMessageThread = inbox.SendMessageThread(ipv4, ipv6ll, 6, remote_mac, name, user_mac, message,
-                                                            inbox_p)
-                sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-                sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
-                sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-                logging.info(f'Sending a message to {name} {remote_mac} by {ipv6}')
-                self.threadPool.start(sendMessageThread)
-            else:
-                logging.info(f'Could not send a message to {name} {remote_mac} no IP address available')
-                msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Critical)
-                msg.setWindowTitle('Error')
-                name = self.chatGroupBox.title()
-                msg.setText(f"Could not send message to {name}")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-                answer = msg.exec_()
+        inter_ip = self.interIpAddressLineEdit.text()
+        inter_port = self.interPortSpinBox.value()
+        inter_password = self.interPasswordLineEdit.text()
+
+        smartSendMessageThread = inbox.SmartSendMessageThread(ipv4, ipv6, inbox_p, remote_mac, user_mac, inter_ip, inter_port, inter_password, message, name, timeout=3)
+        smartSendMessageThread.signals.on_success.connect(self.smartSendMessageOnSuccess)
+        smartSendMessageThread.signals.on_fail.connect(self.smartSendMessageOnFail)
+        self.threadPool.start(smartSendMessageThread)
+
 
     @QtCore.pyqtSlot(str, str)
-    def sendMessageThreadOnSent(self, remote_mac, remote_ip):
-        pass
+    def smartSendMessageOnFail(self, remote_name, remote_mac):
+        logging.info(f"Cannot send message to {remote_name} {remote_mac}")
+        msg = QtWidgets.QMessageBox(self)
+        msg.setIcon(QtWidgets.QMessageBox.Critical)
+        msg.setWindowTitle('Error')
+        msg.setText(f"Could not send the message to {remote_name}")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        answer = msg.exec_()
 
-    @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, dict, str)
-    def sendMessageThreadOnReceivedConfirmation(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name,
-                                                local_mac, message, port, recv_confirmation, sent_timestamp):
-        if remote_mac == recv_confirmation.get('receiver'):
-            logging.info(
-                f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} match, we sent the message correctly")
+    @QtCore.pyqtSlot(dict, str, str, str, dict)
+    def smartSendMessageOnSuccess(self, received_confirmation, sent_timestamp, message, ipv_used, contact_information):
 
-            ########## THE MESSAGE WAS SENT
-            conn = dbfunctions.get_connection()
-            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message,
-                                            recv_confirmation['received_timestamp'])
-            conn.close()
+        conn = dbfunctions.get_connection()
+        dbfunctions.insert_sent_message(conn, sent_timestamp, received_confirmation['receiver'], message, received_confirmation['received_timestamp'])
+        conn.close()
 
-            if self.chatMateMacAddressLabel.text() == remote_mac:
-                for row in range(self.conversationsTableWidget.rowCount()):
-                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
-                        self.conversationsTableWidget.cellClicked.emit(row, 0)
-                        break
-
-            self.messageLineEdit.setText('')
-
-        else:
-            logging.info(
-                f"The remote mac {remote_mac} and the receiver mac {recv_confirmation.get('receiver')} doesn't match, we could not send the message")
-            if ip_version == 4:
-                logging.info(
-                    f"Trying to send the message to {remote_name} {remote_mac} by IPv6 {remote_ip6}")
-
-                if not remote_ip6:
-                    remote_ip6 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
-                    logging.info(
-                        f"Contact {remote_name} {remote_mac} has not an IPv6, generating one ({remote_ip6})"
-                    )
-
-                sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name,
-                                                            local_mac, message, port)
-                sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-                sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
-                sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-                self.threadPool.start(sendMessageThread)
-
-            elif ip_version == 6:
-                new_remote_ip6 = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
-                if remote_ip6 != new_remote_ip6:
-                    logging.info(
-                        f"Trying to send the message to {remote_name} {remote_mac} by IPv6 Link Local EUI-64 {new_remote_ip6}")
-                    sendMessageThread = inbox.SendMessageThread(remote_ip4, new_remote_ip6, 6, remote_mac, remote_name,
-                                                                local_mac, message, port)
-                    sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-                    sendMessageThread.signals.on_received_confirmation.connect(
-                        self.sendMessageThreadOnReceivedConfirmation)
-                    sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-                    self.threadPool.start(sendMessageThread)
-                else:
-                    logging.info(
-                        f'We could not send the message to {remote_name} {remote_mac}, not by IPv4, IPv6 or IPv6 Link Local EUI-64')
-                    msg = QtWidgets.QMessageBox(self)
-                    msg.setIcon(QtWidgets.QMessageBox.Critical)
-                    msg.setWindowTitle('Error')
-                    name = self.chatGroupBox.title()
-                    msg.setText(f"Could not send message to {name}")
-                    msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                    msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-                    answer = msg.exec_()
-            else:
-                logging.info(f'We could not send the message to {remote_name} {remote_mac}, not by IPv4 or IPv6')
-                msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Critical)
-                msg.setWindowTitle('Error')
-                name = self.chatGroupBox.title()
-                msg.setText(f"Could not send message to {name}")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-                answer = msg.exec_()
-
-    @QtCore.pyqtSlot(str, str, int, str, str, str, str, int, 'PyQt_PyObject')
-    def sendMessageThreadOnError(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message,
-                                 port, exception):
-        if ip_version == 4:
-            logging.info(
-                f"We couldn't send the message to {remote_name} {remote_mac} using IPv4 {remote_ip4}, checking if we have IPv6")
-            if remote_ip6:
-                sendMessageThread = inbox.SendMessageThread(remote_ip4, remote_ip6, 6, remote_mac, remote_name,
-                                                            local_mac, message, port)
-                sendMessageThread.signals.on_sent.connect(self.sendMessageThreadOnSent)
-                sendMessageThread.signals.on_received_confirmation.connect(self.sendMessageThreadOnReceivedConfirmation)
-                sendMessageThread.signals.on_error.connect(self.sendMessageThreadOnError)
-                logging.info(
-                    f"We have IPv6 available to send the message to {remote_name} {remote_mac}, sending by IPv6")
-                self.threadPool.start(sendMessageThread)
-            else:
-                logging.info(
-                    f"We don't have IPv6 available to send the message to {remote_name} {remote_mac}, cancelling")
-                msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Critical)
-                msg.setWindowTitle('Error')
-                msg.setText(f"Could not send the message to {remote_name}")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-                answer = msg.exec_()
-        elif ip_version == 6:
-            logging.info(
-                f"We couldn't send the message to {remote_name} {remote_mac} using IPv6 {remote_ip6}, checking if we can request information")
-            ipv6ll = configuration.generate_ipv6_linklocal_eui64_address(remote_mac)
-            if remote_ip6 == ipv6ll:
-                logging.info(
-                    f"The IPv6 Link Local EUI-64 generated to request information is the same as the IPv6 we tried to use to send the message to {remote_name} {remote_mac}, so we can't request information ({ipv6ll})")
-                msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Critical)
-                msg.setWindowTitle('Error')
-                msg.setText(f"Could not send the message to {remote_name}")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-                answer = msg.exec_()
-            else:
-                logging.info(
-                    f"Requesting information to {remote_name} {remote_mac} using IPv6 Link Local EUI-64 {ipv6ll}")
-                gcit = task.GetContactInformationForChatThread(ipv6ll, port, remote_name, remote_mac, message,
-                                                               local_mac)
-                gcit.signals.on_error.connect(self.getContactInformationForChatThreadOnError)
-                gcit.signals.on_result.connect(self.getContactInformationForChatThreadOnResult)
-                self.threadPool.start(gcit)
-
-    # remote_mac, local_mac, remote_name, message, contact_info
-    @QtCore.pyqtSlot(str, str, str, str, dict)
-    def getContactInformationForChatThreadOnResult(self, remote_mac, local_mac, remote_name, message, contact_info):
-        if contact_info.get('mac_address') == remote_mac:
-            logging.info(f"We requested information succesfully to {remote_name} {remote_mac}")
-            conn = dbfunctions.get_connection()
-            dbfunctions.update_contact(
-                conn, remote_mac, ipv4_address=contact_info.get('ipv4_address'),
-                ipv6_address=contact_info.get('ipv6_address'), inbox_port=contact_info.get('inbox_port'),
-                ftp_port=contact_info.get('ftp_port'))
-            conn.close()
-
+        if contact_information:  # Update the contact (ipv4, ipv6, inbox_port, ftp_port)
             for row in range(self.contactsTableWidget.rowCount()):
-                if remote_mac == self.contactsTableWidget.item(row, 1).text():
-                    self.contactsTableWidget.item(row, 2).setText(contact_info.get('ipv4_address'))
-                    self.contactsTableWidget.item(row, 3).setText(contact_info.get('ipv6_address'))
-                    self.contactsTableWidget.cellWidget(row, 4).setValue(contact_info.get('inbox_port'))
-                    self.contactsTableWidget.cellWidget(row, 5).setValue(contact_info.get('ftp_port'))
+                if self.contactsTableWidget.item(row, 1).text() == received_confirmation['receiver']:
+                    if ipv_used == '4':  # Actualiza todas las IP
+                        self.contactsTableWidget.item(row, 2).setText(contact_information['ipv4_address'])
+                        self.contactsTableWidget.item(row, 3).setText(contact_information['ipv6_address'])
+                    elif ipv_used == '6':  # Elimina la IPv4
+                        self.contactsTableWidget.item(row, 2).setText('')
+                        self.contactsTableWidget.item(row, 3).setText(contact_information['ipv6_address'])
+                    elif ipv_used == '6lleui64':  # Elimina la IPv4 y actualiza la IPv6 a esta direccion
+                        self.contactsTableWidget.item(row, 2).setText('')
+                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(received_confirmation['receiver'])
+                        self.contactsTableWidget.item(row, 3).setText(ipv6lleui64)
+
+                    self.contactsTableWidget.cellWidget(row, 4).setValue(contact_information['inbox_port'])
+                    self.contactsTableWidget.cellWidget(row, 5).setValue(contact_information['ftp_port'])
                     break
-            logging.info(
-                f"We have updated the information of {remote_name} {remote_mac} by using the information requested")
-            lastAttemp = inbox.LastAttempSendMessageThread(
-                contact_info.get('ipv4_address'), contact_info.get('ipv6_address'), 4, contact_info.get('inbox_port'),
-                remote_mac, remote_name, local_mac, message)
-            lastAttemp.signals.on_error.connect(self.lastAttempOnError)
-            lastAttemp.signals.on_received_confirmation.connect(self.lastAttempOnReceivedConfirmation)
-            logging.info(
-                f"Last attemp to send the message to {remote_name} {remote_mac} by using the new IPv4 {contact_info.get('ipv4_address')} or the new IPv6 {contact_info.get('ipv6_address')}")
-            self.threadPool.start(lastAttemp)
         else:
-            logging.info(
-                f"We requested information to {remote_name} {remote_mac}, but {contact_info.get('name')} {contact_info.get('mac_address')} reply, so we could not sen the message ")
-            msg = QtWidgets.QMessageBox(self)
-            msg.setIcon(QtWidgets.QMessageBox.Critical)
-            msg.setWindowTitle('Error')
-            msg.setText(f"Could not send the message to {remote_name}")
-            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-            answer = msg.exec_()
+            for row in range(self.contactsTableWidget.rowCount()):
+                if self.contactsTableWidget.item(row, 1).text() == received_confirmation['receiver']:
+                    if ipv_used == '4':  # La Ipv4 funciono, no actualices las IP
+                        pass
+                    elif ipv_used == '6':  # La IPv4 no funciono, pero la 6 si, elimina la IPv4
+                        self.contactsTableWidget.item(row, 2).setText('')
+                    elif ipv_used == '6lleui64':  # La IPv4 y la IPv6 no funcionaron, pero la IPv6 ll eui64 si, elimina la 4 y actualiza la 6
+                        self.contactsTableWidget.item(row, 2).setText('')
+                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(received_confirmation['receiver'])
+                        self.contactsTableWidget.item(row, 3).setText(ipv6lleui64)
 
-    @QtCore.pyqtSlot(str, dict, str, str)
-    def lastAttempOnReceivedConfirmation(self, remote_mac, recv_conf, sent_timestamp, message):
-        if remote_mac == recv_conf.get('receiver'):
-            logging.info(f"The message was succesfully sent to {remote_mac} in the last attemp")
-            ########### THE MESSAGE WAS SENT
-            conn = dbfunctions.get_connection()
-            dbfunctions.insert_sent_message(conn, sent_timestamp, remote_mac, message, recv_conf['received_timestamp'])
-            conn.close()
+                    break
 
-            if self.chatMateMacAddressLabel.text() == remote_mac:
-                for row in range(self.conversationsTableWidget.rowCount()):
-                    if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == remote_mac:
-                        self.conversationsTableWidget.cellClicked.emit(row, 0)
-                        break
+        if self.chatMateMacAddressLabel.text() == received_confirmation['receiver']:
+            for row in range(self.conversationsTableWidget.rowCount()):
+                if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == received_confirmation['receiver']:
+                    self.conversationsTableWidget.cellClicked.emit(row, 0)
+                    break
 
-            self.messageLineEdit.setText('')
-
-    @QtCore.pyqtSlot(str, 'PyQt_PyObject')
-    def lastAttempOnError(self, remote_name, e):
-        logging.info(f"The message could not be sent to {remote_name} even in the last attemp")
-        msg = QtWidgets.QMessageBox(self)
-        msg.setIcon(QtWidgets.QMessageBox.Critical)
-        msg.setWindowTitle('Error')
-        msg.setText(f"Could not send the message to {remote_name}")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        answer = msg.exec_()
-
-    @QtCore.pyqtSlot(str, 'PyQt_PyObject')
-    def getContactInformationForChatThreadOnError(self, remote_name, e):
-        logging.info(f"We couldn't request information to {remote_name}, so we can't send the message")
-        msg = QtWidgets.QMessageBox(self)
-        msg.setIcon(QtWidgets.QMessageBox.Critical)
-        msg.setWindowTitle('Error')
-        msg.setText(f"Could not send the message to {remote_name}")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
-        answer = msg.exec_()
+        self.messageLineEdit.setText('')
 
     @QtCore.pyqtSlot(int, int)
     def open_conversation_from_table_cell(self, row, col):
@@ -1459,17 +1269,18 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         text = ''
         for message in reversed(messages):
             if message['type'] == 'received':
-                text = f"{message['name']}: {message['content']}"
+                text = f"[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]{message['name']}: {message['content']}"
                 # text = f"S[{message['sent_timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
                 # text += f"""<b>R[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
 
             else:
-                text = f"Me: {message['content']}"
+                text = f"[{message['received_timestamp'].strftime('%b %d %Y %I:%M %p')}] Me: {message['content']}"
                 # text = f"S[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['received_timestamp'].strftime('%b %d %Y %I:%M %p')}] Me: {message['content']}"
                 # text += f"""<b>S[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
 
             self.chatTextEdit.append(text)
         # self.chatTextEdit.setHtml(text)
+        self.messageLineEdit.setFocus()
 
     @QtCore.pyqtSlot(int, int)
     def update_contact_from_table_cell(self, row, cell):
@@ -1643,6 +1454,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             name = self.contactsTableWidget.item(row, 0).text()
             logging.info(f"Starting chat with '{name}' '{mac_address}'")
             self.tabWidget.setCurrentIndex(0)
+            self.messageLineEdit.setFocus()
             self.addConversationToConversationsTable(mac_address, name)
 
     @QtCore.pyqtSlot()
@@ -2236,8 +2048,15 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
                 self.contactsTableWidget.item(row, 3).setText(contact_info.get('ipv6_address'))
                 self.contactsTableWidget.cellWidget(row, 5).setValue(contact_info.get('ftp_port'))
+                conn = dbfunctions.get_connection()
+                dbfunctions.update_contact(
+                    conn,
+                    contact_info.get('mac_address'),
+                    inbox_port=contact_info.get('inbox_port'),
+                    ftp_port=contact_info.get('ftp_port')
+                )
+                conn.close()
                 success_message = f'{self.contactsTableWidget.item(row, 0).text()} has been updated'
-
                 msg = QtWidgets.QMessageBox(self)
                 msg.setIcon(QtWidgets.QMessageBox.Information)
                 msg.setWindowTitle('Success in life')
@@ -2254,116 +2073,39 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         if btn:
             mac = self.chatMateMacAddressLabel.text()
             conn = dbfunctions.get_connection()
-            ip4, ip6, port = dbfunctions.get_contact(conn, mac, 'ipv4_address', 'ipv6_address', 'ftp_port')
+            ip4, name, port = dbfunctions.get_contact(conn, mac, 'ipv4_address', 'name', 'ftp_port')
             conn.close()
 
-            ip = ip4 if ip4 else ip6
-
-            if not ip:
+            if not ip4:
                 msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Question)
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
                 msg.setWindowTitle('Not enought information')
-                msg.setText("This user doesn't have an IP address")
-                msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+                msg.setText(f"{name} doesn't have an IPv4 address")
+                msg.setInformativeText(f"Please, update {name} by clicking on 'Update' in the contacts table to try to get the IPv4 address of {name}")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
-                if answer == QtWidgets.QMessageBox.Yes:
-                    logging.info('User said yes to IPv6')
-                    ipv6 = configuration.generate_ipv6_linklocal_eui64_address(mac)
-
-                    for row in range(self.contactsTableWidget.rowCount()):
-                        if self.contactsTableWidget.item(row, 1).text() == mac:
-                            self.contactsTableWidget.item(row, 3).setText(ipv6)
-                            break
-
-                    gcir = task.GetContactInformationThread(ipv6, 42000, 3)
-                    gcir.signals.on_finished.connect(self.getContactInfoForFtpConnectionOnFinished)
-                    gcir.signals.on_result.connect(self.getContactInfoForFtpConnectionOnResult)
-                    gcir.signals.on_error.connect(self.getContactInfoForFtpConnectionOnError)
-                    self.threadPool.start(gcir)
-                    logging.info('GetContactInformation started')
-
-                else:
-                    logging.info('User refused to use IPv6')
-                    msg = QtWidgets.QMessageBox(
-                        QtWidgets.QMessageBox.Critical,
-                        'Error',
-                        f"Cannot start FTP connection because the contact has not an IP address",
-                        QtWidgets.QMessageBox.Ok
-                    )
-                    answer = msg.exec_()
             else:
-                self.startFtpClientConnection(ip, port)
+                self.startFtpClientConnection(ip4, port)
 
     @QtCore.pyqtSlot()
     def start_ftp_client_connection(self):
         btn = self.sender()
         if btn:
             row = self.contactsTableWidget.indexAt(btn.pos()).row()
-            ip = self.contactsTableWidget.item(row, 2).text() if self.contactsTableWidget.item(row,
-                                                                                               2).text() else self.contactsTableWidget.item(
-                row, 3).text()
+            ip4 = self.contactsTableWidget.item(row, 2).text()
             port = self.contactsTableWidget.cellWidget(row, 5).value()
-            if not ip:
+            if not ip4:
                 msg = QtWidgets.QMessageBox(self)
-                msg.setIcon(QtWidgets.QMessageBox.Question)
+                msg.setIcon(QtWidgets.QMessageBox.Critical)
                 msg.setWindowTitle('Not enought information')
-                msg.setText("This user doesn't have an IP address")
-                msg.setInformativeText("Try with IPv6 link-local EUI-64 address?")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-                msg.setDefaultButton(QtWidgets.QMessageBox.Yes)
+                msg.setText(f"{self.contactsTableWidget.item(row, 0).text()} doesn't have an IPv4 address")
+                msg.setInformativeText(f"Please, click on 'Update' to try to get the IPv4 address of {self.contactsTableWidget.item(row, 0).text()}")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+                msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
-                if answer == QtWidgets.QMessageBox.Yes:
-                    logging.info('User said yes to IPv6')
-                    mac_address = self.contactsTableWidget.item(row, 1).text()
-                    ipv6 = configuration.generate_ipv6_linklocal_eui64_address(mac_address)
-                    self.contactsTableWidget.item(row, 3).setText(ipv6)
-                    gcir = task.GetContactInformationThread(ipv6, 42000, 3)
-                    gcir.signals.on_finished.connect(self.getContactInfoForFtpConnectionOnFinished)
-                    gcir.signals.on_result.connect(self.getContactInfoForFtpConnectionOnResult)
-                    gcir.signals.on_error.connect(self.getContactInfoForFtpConnectionOnError)
-                    self.threadPool.start(gcir)
-                    logging.info('GetContactInformation started')
-
-                else:
-                    logging.info('User refused to use IPv6')
-                    msg = QtWidgets.QMessageBox(
-                        QtWidgets.QMessageBox.Critical,
-                        'Error',
-                        f"Cannot start FTP connection because the contact has not an IP address",
-                        QtWidgets.QMessageBox.Ok
-                    )
-                    answer = msg.exec_()
             else:
-                self.startFtpClientConnection(ip, port)
-
-    @QtCore.pyqtSlot()
-    def getContactInfoForFtpConnectionOnFinished(self):
-        logging.info('GetContactInformation request finished')
-
-    @QtCore.pyqtSlot(str, int)
-    def getContactInfoForFtpConnectionOnError(self, ip, port):
-        logging.info(f'GetContactInformation request error')
-        msg = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Critical,
-            'Error',
-            f"Could not get enought network information to connect with {ip}:{port}",
-            QtWidgets.QMessageBox.Ok
-        )
-        answer = msg.exec_()
-
-    @QtCore.pyqtSlot(dict)
-    def getContactInfoForFtpConnectionOnResult(self, info):
-        logging.info(f"GetContactInformation request result: {info}")
-        mac_address = info['mac_address']
-        for row in range(self.contactsTableWidget.rowCount()):
-            if self.contactsTableWidget.item(row, 1).text() == mac_address:
-                self.contactsTableWidget.item(row, 2).setText(info['ipv4_address'])
-                self.contactsTableWidget.cellWidget(row, 4).setValue(info['inbox_port'])
-                self.contactsTableWidget.cellWidget(row, 5).setValue(info['ftp_port'])
-                self.startFtpClientConnection(info['ipv4_address'], info['ftp_port'])
-                return
+                self.startFtpClientConnection(ip4, port)
 
     def startFtpClientConnection(self, ip, port, timeout=3):
         logging.info(f"Starting FTP client connection with {ip}:{port}")
@@ -2819,6 +2561,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 self.contactsTableWidget.item(row, 3).setText(new_contact['ipv6_address'])
                 self.contactsTableWidget.cellWidget(row, 4).setValue(new_contact['inbox_port'])
                 self.contactsTableWidget.cellWidget(row, 5).setValue(new_contact['ftp_port'])
+
+                conn = dbfunctions.get_connection()
+                dbfunctions.update_contact(conn, new_contact.get('mac_address'), inbox_port=new_contact['inbox_port'], ftp_port=new_contact['ftp_port'])
+                conn.close()
 
                 msg = QtWidgets.QMessageBox(self)
                 msg.setIcon(QtWidgets.QMessageBox.Information)

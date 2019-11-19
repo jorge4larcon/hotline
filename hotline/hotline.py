@@ -6,7 +6,7 @@ import PyQt5
 import ui
 
 if __name__ == '__main__':
-    configuration.configure_logging(logging.CRITICAL)
+    configuration.configure_logging(logging.INFO)
     logging.info('Logging has been configured!')
     app_icon = None
     try:

@@ -480,7 +480,7 @@ class LastAttempSendMessageThread(QtCore.QRunnable):
 
 
 class SmartSendMessageSignals(QtCore.QObject):
-    # remote_mac, contact_name
+    # remote_name, remote_mac
     on_fail = QtCore.pyqtSignal(str, str)
     # received_confirmation, sent_timestamp, message, IPv used (4, 6, 6lleui64), contact_information
     on_success = QtCore.pyqtSignal(dict, str, str, str, dict)
@@ -503,7 +503,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
         self.message = message
         self.timeout = timeout
         self.signals = SmartSendMessageSignals()
-        self.new_contact_info = None
+        self.new_contact_info = {}
 
     def run(self) -> None:
         if self.ip4 and self.ip6:
@@ -516,97 +516,131 @@ class SmartSendMessageThread(QtCore.QRunnable):
             self.sm_noip4_noip6()
 
     def sm_ip4_ip6(self):
+        logging.info(f'{self.name} has IPv4 and IPv6 address, trying with IPv4')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
             recv_conf = asyncio.run(message_to(self.ip4, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
         except Exception as e:
+            logging.info(f'Could not send the message by IPv4')
             self.sm_noip4_ip6()
         else:
+            logging.info(f'The message was sent')
             if recv_conf.get('receiver') == self.remote_mac:
+                logging.info('The message was delivered to the correct contact')
                 self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '4', self.new_contact_info)
             else:
+                logging.info('The message was delivered to the incorrect contact, requesting information')
                 self.req_information()
 
     def sm_noip4_ip6(self):
+        logging.info(f'{self.name} has IPv6 address, trying with IPv6')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
             recv_conf = asyncio.run(message_to(self.ip6, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
         except Exception as e:
+            logging.info(f'Could not send the message by IPv6')
             self.sm_noip4_noip6()
         else:
+            logging.info(f'The message was sent')
             if recv_conf.get('receiver') == self.remote_mac:
+                logging.info('The message was delivered to the correct contact')
                 self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '6', self.new_contact_info)
                 # Avisa que la IPv4 deberia ser eliminada
                 # Recurrí a IPv4, IPv6 , solo la ultima funciono, por lo tanto deberias eliminar la IPv4
             else:
+                logging.info('The message was delivered to the incorrect contact, requesting information')
                 self.req_information()
 
     def sm_ip4_noip6(self):
+        logging.info(f'{self.name} has IPv4 address, trying with IPv4')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
             recv_conf = asyncio.run(message_to(self.ip4, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port, self.timeout))
         except Exception as e:
+            logging.info(f'Could not send the message by IPv4')
             self.sm_noip4_noip6()
         else:
+            logging.info(f'The message was sent')
             if recv_conf.get('receiver') == self.remote_mac:
+                logging.info('The message was delivered to the correct contact')
                 self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '4', self.new_contact_info)
             else:
+                logging.info('The message was delivered to the incorrect contact, requesting information')
                 self.req_information()
 
     def sm_noip4_noip6(self):
+        logging.info(f'{self.name} has not IPv4 or IPv6 address, trying with IPv6 LL EUI-64 address')
         if self.ip6 == self.ip6lleui64:
+            logging.info(f'The IPv6 address is the same as the IPv6 LL EUI-64 address, requesting information')
             self.req_information()
         else:
+            logging.info(f'The IPv6 address is different to the IPv6 LL EUI-64 address')
             try:
                 sent_timestamp = datetime.datetime.now().isoformat()
                 recv_conf = asyncio.run(
                     message_to(self.ip6lleui64, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port,
                                self.timeout))
             except Exception as e:
+                logging.info(f'Could not send the message by IPv6 LL EUI-64, requesting information')
                 self.req_information()
             else:
+                logging.info(f'The message was sent')
                 if recv_conf.get('receiver') == self.remote_mac:
+                    logging.info('The message was delivered to the correct contact')
                     self.signals.on_success.emit(recv_conf, sent_timestamp, self.message, '6lleui64', self.new_contact_info)
                     # Recurrí a IPv4, IPv6 e IPv6 LL, solo la ultima funciono, por lo tanto deberias actualizar
                     # la ipv6 y eliminar la IPv4
                 else:
+                    logging.info('The message was delivered to the incorrect contact, requesting information')
                     self.req_information()
 
     def req_information(self):
         # Ive tried with IPv4, IPv6 and IPv6 LL EUI-64 and no one has worked.
         # Im going to ask for information to the Interlocutor
         if self.i_requested_info_before:
-            self.signals.on_fail.emit(self.remote_mac, self.name)
+            logging.info(f'I have requested information to {self.name} before, cancelling the message')
+            self.signals.on_fail.emit(self.name, self.remote_mac)
         else:
             self.i_requested_info_before = True
+            logging.info(f'Requesting information to Interlocutor server {self.inter_ip}...')
             try:
                 req = inter.get_by_mac(self.remote_mac)
                 ci = asyncio.run(
                     req.send_to(self.inter_ip, self.inter_port, timeout=self.timeout, password=self.inter_password))
             except Exception as e:
+                logging.info('Could not request information to the Interlocutor server')
                 self.signals.on_fail.emit(self.name, self.remote_mac)
             else:
+                logging.info('Information requested to the Interlocutor server')
                 ci = ci.get('client')
                 if ci:
                     try:
                         ip4 = ci['ipv4_addr']
                         port = ci['port']
                     except Exception as e:
+                        logging.info(f'The reply from the Interlocutor is wrong, cancelling')
                         self.signals.on_fail.emit(self.name, self.remote_mac)
                     else:
+                        logging.info(f'Interlocutor suggested the next address: {ip4}:{port}')
                         if ip4 == self.ip4 and port == self.port:
+                            logging.info('The address suggested and the one we tried with are the same, cancelling')
                             self.signals.on_fail.emit(self.name, self.remote_mac)
                         else:
                             try:
+                                logging.info(f'Requesting information to {self.name} using {ip4}:{port}...')
                                 ci = asyncio.run(get_contact_information(ip4, port, self.timeout))
                             except Exception as e:
+                                logging.info('Could not request information')
                                 self.signals.on_fail.emit(self.name, self.remote_mac)
                             else:
+                                logging.info('The information request was successful')
                                 if ci['mac_address'] == self.remote_mac:
                                     try:
+                                        logging.info(f'The user who replied to the information request has the same MAC address')
                                         self.ip4 = ci['ipv4_address']
                                         self.ip6 = ci['ipv6_address']
                                         self.port = ci['inbox_port']
+                                        self.new_contact_info = ci
                                         if self.ip4 and self.ip6:
                                             self.sm_ip4_ip6()
                                         elif self.ip4 and not self.ip6:
@@ -618,6 +652,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
                                     except Exception as e:
                                         self.signals.on_fail.emit(self.name, self.remote_mac)
                                 else:
+                                    logging.info(f'The user who replied to the information request has a different MAC address, cancelling')
                                     self.signals.on_fail.emit(self.name, self.remote_mac)
                 else:
                     self.signals.on_fail.emit(self.name, self.remote_mac)
