@@ -1675,6 +1675,10 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             except Exception as e:
                 logging.error(e)
                 username = 'Muhammad'
+            finally:
+                conn = dbfunctions.get_connection()
+                dbfunctions.update_configuration(conn, username=username)
+                conn.close()
 
         get_only_by_mac = bool(get_only_by_mac)
         self.interIpAddressLineEdit.setText(inter_address)
