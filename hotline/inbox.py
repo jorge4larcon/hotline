@@ -1,3 +1,5 @@
+"""This module defines functions and classes to send and receive messages across a LAN"""
+
 import asyncio
 import json
 import logging
@@ -13,6 +15,7 @@ MAX_BYTES = 4096
 
 
 def address_and_family(writer: asyncio.StreamWriter):
+    """This functions get the IP address and the socket family of a client socket"""
     peersocket = writer.get_extra_info('socket')
     if peersocket:
         peername = writer.get_extra_info('peername')
@@ -25,6 +28,7 @@ def address_and_family(writer: asyncio.StreamWriter):
 
 
 def address_and_family_from_transport(transport: asyncio.transports.BaseTransport):
+    """This functions get the IP address and the socket family of a client transport"""
     socket = transport.get_extra_info('socket')
     if socket:
         peername = transport.get_extra_info('peername')
@@ -37,6 +41,7 @@ def address_and_family_from_transport(transport: asyncio.transports.BaseTranspor
 
 
 def parse_request(raw_request: bytes):
+    """This function parses the incomming client request"""
     str_request = raw_request.decode('UTF-8')
     try:
         json_request = json.loads(str_request)
@@ -105,6 +110,7 @@ def parse_request(raw_request: bytes):
 
 
 async def get_contact_information(ip_address, port=42000, timeout=3):
+    """This functions sends a `get_contact_information` request to an specific socket address."""
     try:
         reader, writer = await asyncio.wait_for(asyncio.open_connection(ip_address, port), timeout)
         try:
@@ -143,6 +149,7 @@ async def get_contact_information(ip_address, port=42000, timeout=3):
 
 
 async def message_to(ip_address, sender, sent_timestamp, content, receiver, port=42000, timeout=3):
+    """This functions send a `message` request to an specific socket address."""
     received_confirmation = None
     try:
         reader, writer = await asyncio.wait_for(asyncio.open_connection(ip_address, port), timeout)
@@ -163,12 +170,14 @@ async def message_to(ip_address, sender, sent_timestamp, content, receiver, port
 
 
 async def confirm_received(writer, receiver, received_timestamp):
+    """This functions writes a `received_confirmation` to a client socket."""
     confirmation = f'{{"received_timestamp":"{received_timestamp}","receiver":"{receiver}"}}'.encode('UTF-8')
     writer.write(confirmation)
     await writer.drain()
 
 
 async def receive_message(message, user_mac_address, received_timestamp, peer_address, peer_family, signals):
+    """This functions receives an incomming message from a remote contact and add the message to the database."""
     if user_mac_address == message['receiver']:
         try:
             conn = dbfunctions.get_connection()
@@ -210,6 +219,7 @@ async def receive_message(message, user_mac_address, received_timestamp, peer_ad
 
 
 async def deliver_contact_information(writer, mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port):
+    """This functions writes the user contact information to a remote socket."""
     contact_info = json.dumps({
         "name": name,
         "mac_address": mac_address,
@@ -223,6 +233,7 @@ async def deliver_contact_information(writer, mac_address, name, ipv4_address, i
 
 
 async def handle_client(reader, writer):
+    """This functions handles the request of a client."""
     data = await reader.read(MAX_BYTES)
     request = parse_request(data)
     if request:
@@ -257,6 +268,7 @@ async def handle_client(reader, writer):
 
 
 async def start_server(ip_address, signals, port=42000):
+    """This functions starts the server in an specific socket address"""
     server = await asyncio.start_server(handle_client, ip_address, port)
     logging.info(f'Inbox server listening on {ip_address}:{port}')
     async with server:
@@ -264,6 +276,7 @@ async def start_server(ip_address, signals, port=42000):
 
 
 class InboxServerSignals(QtCore.QObject):
+    """This class defines the events of the message receiver server"""
     # the ip and port where the server is binded
     on_start = QtCore.pyqtSignal(str, int)
     on_error = QtCore.pyqtSignal('PyQt_PyObject')
@@ -274,15 +287,18 @@ class InboxServerSignals(QtCore.QObject):
 
 
 class InboxServerProtocol(asyncio.Protocol):
+    """This is the class that defines the thread where the message receiver server runs"""
     def __init__(self, signals: InboxServerSignals):
         self.signals = signals
 
     def connection_made(self, transport: asyncio.transports.BaseTransport) -> None:
+        """When a client connects to the server"""
         peername = transport.get_extra_info('peername')
         logging.info('Connection from {}'.format(peername))
         self.transport = transport
 
     def data_received(self, data: bytes) -> None:
+        """When a client sends data to the server"""
         request = parse_request(data)
         if request:
             conn = dbfunctions.get_connection()
@@ -377,6 +393,7 @@ class InboxServerProtocol(asyncio.Protocol):
 
 
 async def run_inbox_server(ip, port, signals):
+    """This is an async function to start the server"""
     loop = asyncio.get_running_loop()
     server = await loop.create_server(lambda: InboxServerProtocol(signals), ip, port)
     signals.on_start.emit(ip, port)
@@ -385,6 +402,7 @@ async def run_inbox_server(ip, port, signals):
 
 
 class InboxServerThread(QtCore.QRunnable):
+    """This is the thread of the message receiver server"""
     def __init__(self, ip, port):
         super(InboxServerThread, self).__init__()
         self.ip = ip
@@ -392,94 +410,14 @@ class InboxServerThread(QtCore.QRunnable):
         self.signals = InboxServerSignals()
 
     def run(self) -> None:
+        """This functions defines the actions of the message receiver server does when started"""
         try:
             asyncio.run(run_inbox_server(self.ip, self.port, self.signals))
         except Exception as e:
             self.signals.on_error.emit(e)
 
-
-class SendMessageSignals(QtCore.QObject):
-    # remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, exception
-    on_error = QtCore.pyqtSignal(str, str, int, str, str, str, str, int, 'PyQt_PyObject')
-    # remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port, received_confirmation_dict, sent_timestamp
-    on_received_confirmation = QtCore.pyqtSignal(str, str, int, str, str, str, str, int, dict, str)
-    # remote_mac, remote_ip
-    on_sent = QtCore.pyqtSignal(str, str)
-
-
-class SendMessageThread(QtCore.QRunnable):
-    def __init__(self, remote_ip4, remote_ip6, ip_version, remote_mac, remote_name, local_mac, message, port):
-        super(SendMessageThread, self).__init__()
-        self.remote_ip4 = remote_ip4
-        self.remote_ip6 = remote_ip6
-        self.ip_version = ip_version
-        self.port = port
-
-        self.remote_mac = remote_mac
-        self.remote_name = remote_name
-
-        self.local_mac = local_mac
-
-        self.message = message
-
-        self.signals = SendMessageSignals()
-
-    def run(self) -> None:
-        try:
-            ip = None
-            if self.ip_version == 4:
-                ip = self.remote_ip4
-            elif self.ip_version == 6:
-                ip = self.remote_ip6
-
-            sent_timestamp = datetime.datetime.now().isoformat()
-            recv_confirmation = asyncio.run(
-                message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
-        except Exception as e:
-            self.signals.on_error.emit(self.remote_ip4, self.remote_ip6, self.ip_version, self.remote_mac,
-                                       self.remote_name, self.local_mac, self.message, self.port, e)
-        else:
-            self.signals.on_received_confirmation.emit(self.remote_ip4, self.remote_ip6, self.ip_version,
-                                                       self.remote_mac, self.remote_name, self.local_mac, self.message,
-                                                       self.port, recv_confirmation, sent_timestamp)
-
-
-class LastAttempSendMessageSignals(QtCore.QObject):
-    on_received_confirmation = QtCore.pyqtSignal(str, dict, str, str)
-    on_error = QtCore.pyqtSignal(str, 'PyQt_PyObject')
-
-
-class LastAttempSendMessageThread(QtCore.QRunnable):
-    def __init__(self, remote_ip4, remote_ip6, ip_version, port, remote_mac, remote_name, local_mac, message):
-        super(LastAttempSendMessageThread, self).__init__()
-        self.remote_ip4 = remote_ip4
-        self.remote_ip6 = remote_ip6
-        self.port = port
-        self.ip_version = ip_version
-        self.remote_mac = remote_mac
-        self.remote_name = remote_name
-        self.message = message
-        self.local_mac = local_mac
-        self.signals = LastAttempSendMessageSignals()
-
-    def run(self) -> None:
-        try:
-            ip = None
-            if self.ip_version == 4:
-                ip = self.remote_ip4
-            elif self.ip_version == 6:
-                ip = self.remote_ip6
-
-            sent_timestamp = datetime.datetime.now().isoformat()
-            recv_conf = asyncio.run(
-                message_to(ip, self.local_mac, sent_timestamp, self.message, self.remote_mac, self.port))
-        except Exception as e:
-            self.signals.on_error.emit(self.remote_name, e)
-        else:
-            self.signals.on_received_confirmation.emit(self.remote_mac, recv_conf, sent_timestamp, self.message)
-
-
 class SmartSendMessageSignals(QtCore.QObject):
+    """This class defines the signals or events of a SmartSendMessageThread"""
     # remote_name, remote_mac
     on_fail = QtCore.pyqtSignal(str, str)
     # received_confirmation, sent_timestamp, message, IPv used (4, 6, 6lleui64), contact_information
@@ -487,6 +425,7 @@ class SmartSendMessageSignals(QtCore.QObject):
 
 
 class SmartSendMessageThread(QtCore.QRunnable):
+    """This is the class that defines the thread to send a message."""
     def __init__(self, ip4, ip6, port, remote_mac, local_mac, inter_ip, inter_port, inter_password, message, name, timeout=3):
         super(SmartSendMessageThread, self).__init__()
         self.name = name
@@ -506,6 +445,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
         self.new_contact_info = {}
 
     def run(self) -> None:
+        """This method is called when the SmartSentMessageThread starts"""
         if self.ip4 and self.ip6:
             self.sm_ip4_ip6()
         elif self.ip4 and not self.ip6:
@@ -516,6 +456,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
             self.sm_noip4_noip6()
 
     def sm_ip4_ip6(self):
+        """This method send the message using the IPv4 address"""
         logging.info(f'{self.name} has IPv4 and IPv6 address, trying with IPv4')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
@@ -533,6 +474,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
                 self.req_information()
 
     def sm_noip4_ip6(self):
+        """This method send the message using the IPv6 address"""
         logging.info(f'{self.name} has IPv6 address, trying with IPv6')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
@@ -552,6 +494,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
                 self.req_information()
 
     def sm_ip4_noip6(self):
+        """This method send the message using the IPv4 address"""
         logging.info(f'{self.name} has IPv4 address, trying with IPv4')
         try:
             sent_timestamp = datetime.datetime.now().isoformat()
@@ -569,6 +512,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
                 self.req_information()
 
     def sm_noip4_noip6(self):
+        """This method send the message using the IPv6 link local EUI-64 address"""
         logging.info(f'{self.name} has not IPv4 or IPv6 address, trying with IPv6 LL EUI-64 address')
         if self.ip6 == self.ip6lleui64:
             logging.info(f'The IPv6 address is the same as the IPv6 LL EUI-64 address, requesting information')
@@ -595,6 +539,7 @@ class SmartSendMessageThread(QtCore.QRunnable):
                     self.req_information()
 
     def req_information(self):
+        """This method request information to an Interlocutor server"""
         # Ive tried with IPv4, IPv6 and IPv6 LL EUI-64 and no one has worked.
         # Im going to ask for information to the Interlocutor
         if self.i_requested_info_before:
