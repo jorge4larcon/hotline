@@ -1,3 +1,9 @@
+"""This is a mini library, it is used to know specific the path of folders on Windows platforms.
+Recovered from: https://github.com/maphew/apt/blob/master/knownpaths.py
+Author: matt wilkie
+Email: maphew@gmail.com
+"""
+
 import ctypes
 from ctypes import windll, wintypes
 from uuid import UUID
@@ -147,3 +153,29 @@ def get_path(folderid, user_handle=UserHandle.common):
 if __name__ == '__main__':
     downloads = get_path(FOLDERID.Downloads, UserHandle.current)
     print(downloads)
+
+# [1] http://msdn.microsoft.com/en-us/library/windows/desktop/aa373931.aspx
+# [2] http://msdn.microsoft.com/en-us/library/windows/desktop/dd378457.aspx
+# [3] http://msdn.microsoft.com/en-us/library/windows/desktop/bb762188.aspx
+# [4] http://msdn.microsoft.com/en-us/library/windows/desktop/ms680722.aspx
+# [5] http://www.themacaque.com/?p=954
+
+'''
+The MIT License (MIT)
+Copyright (c) 2014 Michael Kropat
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+'''
