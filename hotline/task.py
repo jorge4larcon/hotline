@@ -1,3 +1,5 @@
+"""This module defines tasks (threads) of the application."""
+
 from PyQt5 import QtCore
 import inbox
 import asyncio
