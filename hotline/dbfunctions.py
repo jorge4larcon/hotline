@@ -1,3 +1,5 @@
+"""This module provides an API for database related operations."""
+
 import sqlite3
 import os
 import datetime
@@ -49,6 +51,7 @@ RECEIVED_MESSAGE_FIELDS = {
 
 
 def unwrap_get_configuration(function):
+    """This is a decorating function to return the values​of the decorated function in the form of a list"""
     def configuration_unwrapper(*args):
         len_args = len(args)
         if len_args < 2:
@@ -64,6 +67,7 @@ def unwrap_get_configuration(function):
 
 
 def unwrap_get_contact(function):
+    """This is a decorating function to return the values​of the decorated function in the form of a list"""
     def contact_unwrapper(*args, **kwargs):
         len_args = len(args)
         if len_args < 3:
@@ -79,6 +83,7 @@ def unwrap_get_contact(function):
 
 
 def unwrap_get_sent_message(function):
+    """This is a decorating function to return the values​of the decorated function in the form of a list"""
     def sent_message_unwrapper(*args, **kwargs):
         len_args = len(args)
         if len_args < 3:
@@ -94,6 +99,7 @@ def unwrap_get_sent_message(function):
 
 
 def unwrap_get_received_message(function):
+    """This is a decorating function to return the values​of the decorated function in the form of a list"""
     def received_message_unwrapper(*args, **kwargs):
         len_args = len(args)
         if len_args < 3:
@@ -109,6 +115,7 @@ def unwrap_get_received_message(function):
 
 
 def update_configuration(conn: sqlite3.Connection, **kwargs):
+    """This function is used to modify the `Configuration` table in the database."""
     fields = [*filter(lambda f: f in CONFIGURATION_FIELDS and CONFIGURATION_FIELDS[f]['editable'], kwargs)]
     if fields:
         values = [kwargs[field] for field in fields]
@@ -119,6 +126,7 @@ def update_configuration(conn: sqlite3.Connection, **kwargs):
 
 @unwrap_get_configuration
 def get_configuration(conn: sqlite3.Connection, *args):
+    """This function is used to retrieve data from the `Configuration` table in the database."""
     fields = [*filter(lambda f: f in CONFIGURATION_FIELDS, args)]
     if fields:
         with conn:
@@ -129,6 +137,7 @@ def get_configuration(conn: sqlite3.Connection, *args):
 
 def insert_contact(conn: sqlite3.Connection, mac_address, name='Muhammad', ipv4_address='', ipv6_address='',
                    inbox_port=42000, ftp_port=21):
+    """This function is used to insert a contact in the database."""
     statement = 'INSERT INTO Contact(mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port) ' \
                 'VALUES (?, ?, ?, ?, ?, ?)'
     with conn:
@@ -136,6 +145,7 @@ def insert_contact(conn: sqlite3.Connection, mac_address, name='Muhammad', ipv4_
 
 
 def update_contact(conn: sqlite3.Connection, mac_address, **kwargs):
+    """This function is used to update a contact in the database."""
     fields = [*filter(lambda f: f in CONTACT_FIELDS and CONTACT_FIELDS[f]['editable'], kwargs)]
     if fields:
         values = [kwargs[field] for field in fields]
@@ -146,12 +156,14 @@ def update_contact(conn: sqlite3.Connection, mac_address, **kwargs):
 
 
 def delete_contact(conn: sqlite3.Connection, mac_address):
+    """This function is used to erase a contact in the database."""
     with conn:
         conn.execute('DELETE FROM Contact WHERE mac_address = ?', (mac_address,))
 
 
 @unwrap_get_contact
 def get_contact(conn: sqlite3.Connection, mac_address, *args):
+    """This function is used to select a contact in the database."""
     fields = [*filter(lambda f: f in CONTACT_FIELDS, args)]
     if fields:
         with conn:
@@ -163,24 +175,28 @@ def get_contact(conn: sqlite3.Connection, mac_address, *args):
 
 
 def contacts(conn: sqlite3.Connection, mac_address=None):
+    """This function is used to select all contacts in the database."""
     with conn:
         return conn.execute(
             'SELECT mac_address, name, ipv4_address, ipv6_address, inbox_port, ftp_port FROM Contact ORDER BY name ASC').fetchall()
 
 
 def last_sent_messages(conn: sqlite3.Connection, limit=10):
+    """This function is used to select the last sent messages in the database."""
     statement = 'SELECT DISTINCT MAX(sent_timestamp), receiver_contact, name FROM SentMessage, Contact WHERE receiver_contact = mac_address GROUP BY receiver_contact ORDER BY sent_timestamp DESC LIMIT ?;'
     with conn:
         return conn.execute(statement, (limit,)).fetchall()
 
 
 def last_sent_messages_to_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    """This function is used to select the last sent messages to an specific contact in the database."""
     statement = 'SELECT sent_timestamp, received_timestamp, receiver_contact, name, content FROM SentMessage, Contact WHERE receiver_contact = ? AND receiver_contact = mac_address ORDER BY sent_timestamp DESC LIMIT ?;'
     with conn:
         return conn.execute(statement, (mac_address, limit))
 
 
 def insert_sent_message(conn: sqlite3.Connection, sent_timestamp, receiver_contact, content, received_timestamp):
+    """This function is used to insert a sent message in the database."""
     statement = 'INSERT INTO SentMessage(sent_timestamp, receiver_contact, content, received_timestamp) ' \
                 'VALUES (?, ?, ?, ?)'
     with conn:
@@ -188,6 +204,7 @@ def insert_sent_message(conn: sqlite3.Connection, sent_timestamp, receiver_conta
 
 
 def update_sent_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
+    """This function is used to update a sent message in the database."""
     fields = [*filter(lambda f: f in SENT_MESSAGE_FIELDS and SENT_MESSAGE_FIELDS[f]['editable'], kwargs)]
     if fields:
         values = [kwargs[field] for field in fields]
@@ -198,12 +215,14 @@ def update_sent_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
 
 
 def delete_sent_message(conn: sqlite3.Connection, sent_timestamp):
+    """This function is used to delete a sent message in the database."""
     with conn:
         conn.execute('DELETE FROM SentMessage WHERE sent_timestamp = ?', (sent_timestamp,))
 
 
 @unwrap_get_sent_message
 def get_sent_message(conn: sqlite3.Connection, sent_timestamp, *args):
+    """This function is used to select a sent message in the database."""
     fields = [*filter(lambda f: f in SENT_MESSAGE_FIELDS, args)]
     if fields:
         with conn:
@@ -215,12 +234,14 @@ def get_sent_message(conn: sqlite3.Connection, sent_timestamp, *args):
 
 
 def sent_messages(conn: sqlite3.Connection):
+    """This function is used to select every sent message in the database."""
     with conn:
         return conn.execute(
             'SELECT sent_timestamp, receiver_contact, content, received_timestamp FROM SentMessage ORDER BY sent_timestamp DESC').fetchall()
 
 
 def insert_received_message(conn: sqlite3.Connection, received_timestamp, sender_contact, content, sent_timestamp):
+    """This function is used to insert a received message in the database."""
     statement = 'INSERT INTO ReceivedMessage(received_timestamp, sender_contact, content, sent_timestamp) ' \
                 'VALUES (?, ?, ?, ?)'
     with conn:
@@ -228,6 +249,7 @@ def insert_received_message(conn: sqlite3.Connection, received_timestamp, sender
 
 
 def last_received_messages(conn: sqlite3.Connection, limit=10):
+    """This function is used to select the last received messages in the database."""
     # Use of distinc, max and group by to get the last n messages
     statement = 'SELECT DISTINCT MAX(received_timestamp), sender_contact, name FROM ReceivedMessage, Contact WHERE sender_contact = mac_address GROUP BY sender_contact ORDER BY received_timestamp DESC LIMIT ?'
     with conn:
@@ -235,12 +257,14 @@ def last_received_messages(conn: sqlite3.Connection, limit=10):
 
 
 def last_received_messages_from_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    """This function is used to select the received messages to an specific contact in the database."""
     statement = 'SELECT received_timestamp, sent_timestamp, sender_contact, name, content FROM ReceivedMessage, Contact WHERE sender_contact = ? AND sender_contact = mac_address ORDER BY received_timestamp DESC LIMIT ?'
     with conn:
         return conn.execute(statement, (mac_address, limit))
 
 
 def update_received_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
+    """This function is used to update a received message in the database."""
     fields = [*filter(lambda f: f in RECEIVED_MESSAGE_FIELDS and RECEIVED_MESSAGE_FIELDS[f]['editable'], kwargs)]
     if fields:
         values = [kwargs[field] for field in fields]
@@ -251,12 +275,14 @@ def update_received_message(conn: sqlite3.Connection, sent_timestamp, **kwargs):
 
 
 def delete_received_message(conn: sqlite3.Connection, received_timestamp):
+    """This function is used to delete a received message in the database."""
     with conn:
         conn.execute('DELETE FROM ReceivedMessage WHERE received_timestamp = ?', (received_timestamp,))
 
 
 @unwrap_get_received_message
 def get_received_message(conn: sqlite3.Connection, received_timestamp, *args):
+    """This function is used to select a received message in the database."""
     fields = [*filter(lambda f: f in RECEIVED_MESSAGE_FIELDS, args)]
     if fields:
         with conn:
@@ -269,12 +295,14 @@ def get_received_message(conn: sqlite3.Connection, received_timestamp, *args):
 
 
 def received_messages(conn: sqlite3.Connection):
+    """This function is used to select every received message in the database."""
     with conn:
         return conn.execute(
             'SELECT received_timestamp, sender_contact, content, sent_timestamp FROM ReceivedMessage ORDER BY received_timestamp DESC').fetchall()
 
 
 def last_sent_or_received_messages_from_contact(conn: sqlite3.Connection, mac_address, limit=10):
+    """This function is used to select the last sent or received messages from a specific contact."""
     received_messages = last_received_messages_from_contact(conn, mac_address, limit)
     sent_messages = last_sent_messages_to_contact(conn, mac_address, limit)
     messages = []
@@ -306,6 +334,7 @@ def last_sent_or_received_messages_from_contact(conn: sqlite3.Connection, mac_ad
 
 
 def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
+    """This function is used to select the last sent or received messages in the database."""
     last_sent = last_sent_messages(conn, limit)
     last_received = last_received_messages(conn, limit)
     last_messenguers = []
@@ -344,6 +373,7 @@ def last_sent_received_messages(conn: sqlite3.Connection, limit=10):
 
 
 def get_connection():
+    """This function is used to get a connection to the database."""
     if DB_PATH:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -354,6 +384,7 @@ def get_connection():
 
 
 def set_dbpath(path):
+    """This function is used to set where the database path is."""
     if os.path.isfile(path):
         global DB_PATH
         DB_PATH = path
@@ -373,7 +404,6 @@ if __name__ == '__main__':
     messages = last_sent_or_received_messages_from_contact(conn, 'eeee.fefe.acdf', limit=10)
     for m in messages:
         print(m)
-
 
     # last_messages_from_mcgleen = last_received_messages_from_contact(conn, 'eeee.fefe.acdf', 1)
     # for m in last_messages_from_mcgleen:
