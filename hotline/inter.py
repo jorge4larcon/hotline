@@ -1,3 +1,5 @@
+"""This functions defines the requests that can be done to an interloutor server"""
+
 import asyncio
 import logging
 import json
@@ -9,18 +11,21 @@ _DROP = 'drop'
 
 
 class _Base:
+    """This is a base class for the requests"""
     def __init__(self, password, method):
         self.user = 'client'
         self.password = password
         self.method = method
 
     def to_json_request(self):
+        """Parses the request to a json string"""
         return f"{{\"user\":\"{self.user}\",\"password\":\"{self.password}\",\"method\":\"{self.method}\""
 
     def __str__(self):
         return 'base request'
 
     async def send_to(self, ip, port, timeout=3, password='secret'):
+        """Sends the request to an specific socket address"""
         # Write / Send
         try:
             reader, writer = await asyncio.wait_for(asyncio.open_connection(ip, port), timeout)
@@ -46,6 +51,7 @@ class _Base:
 
 
 class _Get(_Base):
+    """A base class for the The GET requests"""
     def __init__(self, password, how):
         super().__init__(password, _GET)
         self.how = how
@@ -55,6 +61,7 @@ class _Get(_Base):
 
 
 class _GetByMac(_Get):
+    """A class representing a GetByMac request"""
     def __init__(self, password, mac):
         super().__init__(password, 'mac')
         self.mac = mac
@@ -67,6 +74,7 @@ class _GetByMac(_Get):
 
 
 class _GetByUsername(_Get):
+    """A class representing a GetByUsername request"""
     def __init__(self, password, username, start_index):
         super().__init__(password, 'username')
         self.username = username
@@ -80,6 +88,7 @@ class _GetByUsername(_Get):
 
 
 class _Drop(_Base):
+    """A class representing a Drop request"""
     def __init__(self, ip, password):
         super().__init__(password, _DROP)
         self.ip = ip
@@ -92,6 +101,7 @@ class _Drop(_Base):
 
 
 class _SignUp(_Base):
+    """A class representing a SignUp request"""
     def __init__(self, mac, password, username, port, get_only_by_mac):
         super().__init__(password, _SIGN_UP)
         self.username = username
@@ -113,16 +123,20 @@ class _SignUp(_Base):
 
 
 def sign_up(mac, username=_THE_MOST_COMMON_NAME_IN_THE_WORLD, port=42_000, get_only_by_mac=False):
+    """This method creates a _SignUp request"""
     return _SignUp(mac, '', username, port, get_only_by_mac)
 
 
 def drop(ip):
+    """This method creates a _Drop request"""
     return _Drop(ip, '')
 
 
 def get_by_username(username=_THE_MOST_COMMON_NAME_IN_THE_WORLD, start_index=0):
+    """This method creates a _GetByUsername request"""
     return _GetByUsername('', str(username), start_index)
 
 
 def get_by_mac(mac):
+    """This method creates a _GetByMac request"""
     return _GetByMac('', mac)
