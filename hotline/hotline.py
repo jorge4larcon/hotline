@@ -1,3 +1,5 @@
+"""This module is the responsible of setting up the application and then start it."""
+
 import dbfunctions
 import configuration
 import logging
