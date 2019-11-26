@@ -1,3 +1,8 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
+
+"""This module defines the appearance of the user interface and its behavior"""
+
 # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file '.\media\appui.ui'
@@ -33,6 +38,7 @@ from socket import gethostname
 
 
 class FtpClientTabWidget(QtWidgets.QWidget):
+    """This class defines a FTP client tab"""
     def __init__(self, ftp_conn: ftplib.FTP, container: QtWidgets.QTabBar, thread_pool: QtCore.QThreadPool,
                  notificationsTable: QtWidgets.QTableWidget, tabWidget: QtWidgets.QTabBar, *args, **kwargs):
         super(FtpClientTabWidget, self).__init__(*args, **kwargs)
@@ -83,6 +89,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         self.loadDirContentInFtpServerFilesTable()
 
     def setupftpServerFilesTable(self):
+        """This method sets up the tab with some initial values"""
         headers = ['File name', 'Type', 'Size', 'Actions']
         self.ftpServerFilesTableWidget.setColumnCount(len(headers))
         self.ftpServerFilesTableWidget.setHorizontalHeaderLabels(headers)
@@ -94,6 +101,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def uploadPushButtonAction(self):
+        """This is what the uploadPushButton does when clicked"""
         filename = QtWidgets.QFileDialog.getOpenFileName(self, 'Select a file to upload',
                                                          knownpaths.get_path(knownpaths.FOLDERID.Documents,
                                                                              knownpaths.UserHandle.current))[0]
@@ -108,12 +116,14 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         self.thread_pool.start(uploader)
 
     def freezeControls(self):
+        """This function freezes the interface controls"""
         self.goBackPushButton.setEnabled(False)
         self.refreshPushButton.setEnabled(False)
         self.uploadPushButton.setEnabled(False)
         self.ftpServerFilesTableWidget.setEnabled(False)
 
     def unfreezeControls(self):
+        """This function unfreezes the interface controls"""
         self.goBackPushButton.setEnabled(True)
         self.refreshPushButton.setEnabled(True)
         self.uploadPushButton.setEnabled(True)
@@ -121,26 +131,31 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(str, int, str)
     def uploadFileOnStart(self, ip, port, filename):
+        """This callback is called when an upload starts"""
         logging.info(f"Uploading '{filename}' to {ip}:{port}")
         self.addNotificationToNotificationsTable(f"Uploading '{filename}' to {ip}:{port}")
         self.freezeControls()
 
     @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
     def uploadFileOnError(self, ip, port, filename, e):
+        """This callback is called when an upload fails"""
         logging.info(f"Could not upload '{filename}' to {ip}:{port} error: {e}")
         self.addNotificationToNotificationsTable(f"Could not upload '{filename}' to {ip}:{port} error: {e}")
 
     @QtCore.pyqtSlot(str, int, str)
     def uploadFileOnFinished(self, ip, port, filename):
+        """This callback is called when an upload has finished"""
         logging.info(f"'{filename}' was uploaded to {ip}:{port}")
         self.addNotificationToNotificationsTable(f"'{filename}' was uploaded to {ip}:{port}")
 
     @QtCore.pyqtSlot()
     def uploadFileOnEnd(self):
+        """This callback is called when an uploading thread has finished"""
         logging.info('The upload thread has finished, reactivating buttons')
         self.unfreezeControls()
 
     def loadDirContentInFtpServerFilesTable(self):
+        """This functions lists the content of a directory"""
         self.freezeControls()
         while self.ftpServerFilesTableWidget.rowCount():
             self.ftpServerFilesTableWidget.removeRow(0)
@@ -186,6 +201,7 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def change_folder(self):
+        """This function changes the actual directory"""
         btn = self.sender()
         if btn:
             self.freezeControls()
@@ -209,10 +225,12 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def refreshPushButtonAction(self):
+        """This function refresh the files in the actual directory"""
         self.loadDirContentInFtpServerFilesTable()
 
     @QtCore.pyqtSlot()
     def downloadPushButtonAction(self):
+        """This is the callback funtion that is called when downloadPushButton is clicked"""
         btn = self.sender()
         if btn:
             row = self.ftpServerFilesTableWidget.indexAt(btn.pos()).row()
@@ -231,26 +249,31 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot(str, int, str)
     def downloadFileOnStart(self, ip, port, filename):
+        """This is a callback called when a download has started"""
         logging.info(f"Downloading '{filename}' from {ip}:{port}")
         self.addNotificationToNotificationsTable(f"Downloading '{filename}' from {ip}:{port}")
         self.freezeControls()
 
     @QtCore.pyqtSlot(str, int, str, 'PyQt_PyObject')
     def downloadFileOnError(self, ip, port, filename, e):
+        """This is a callback called when a download has failed"""
         logging.info(f"Could not download '{filename}' from {ip}:{port} error: {e}")
         self.addNotificationToNotificationsTable(f"Could not download '{filename}' from {ip}:{port} error: {e}")
 
     @QtCore.pyqtSlot(str, int, str)
     def downloadFileOnFinished(self, ip, port, filename):
+        """This is a callback called when a download has finished"""
         logging.info(f"'{filename}' was downloaded from {ip}:{port}")
         self.addNotificationToNotificationsTable(f"'{filename}' was downloaded from {ip}:{port}")
 
     @QtCore.pyqtSlot()
     def downloadFileOnEnd(self):
+        """This is a callback called when a download thread has finished"""
         self.unfreezeControls()
 
     @QtCore.pyqtSlot()
     def goBackPushButtonAction(self):
+        """This is a callback called when goBackButton is clicked"""
         self.freezeControls()
         try:
             self.ftp_conn.cwd('..')
@@ -269,9 +292,11 @@ class FtpClientTabWidget(QtWidgets.QWidget):
         self.unfreezeControls()
 
     def erase_myself(self):
+        """This function removes the tab from the tab widget"""
         self.container.removeTab(self.container.currentIndex())
 
     def addNotificationToNotificationsTable(self, notification, time=None):
+        """This function adds a notification to the Notifications table"""
         if not time:
             time = datetime.datetime.now()
         row = self.notificationsTableWidget.rowCount()
@@ -286,7 +311,9 @@ class FtpClientTabWidget(QtWidgets.QWidget):
 
 
 class Ui_HotlineMainWindow(object):
+    """This class defines the entire user interface of the program"""
     def setupUi(self, HotlineMainWindow):
+        """This method creates all the Qt Widgets and appends them to the window"""
         HotlineMainWindow.setObjectName("HotlineMainWindow")
         HotlineMainWindow.resize(792, 600)
         self.centralwidget = QtWidgets.QWidget(HotlineMainWindow)
@@ -919,6 +946,7 @@ class Ui_HotlineMainWindow(object):
         HotlineMainWindow.setTabOrder(self.downloadsTabWidget, self.notificationsTableWidget)
 
     def retranslateUi(self, HotlineMainWindow):
+        """This method translates the user interface"""
         _translate = QtCore.QCoreApplication.translate
         HotlineMainWindow.setWindowTitle(_translate("HotlineMainWindow", "Hotline"))
         self.conversationsGroupBox.setTitle(_translate("HotlineMainWindow", "Conversations"))
@@ -995,6 +1023,7 @@ class Ui_HotlineMainWindow(object):
 
 
 class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
+    """This class adds functionality to the user interface"""
     def __init__(self, *args, **kwargs):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
@@ -1025,9 +1054,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             self.addNotificationToNotificationsTable(kwargs["err"])
 
     def setupDownloadsTab(self):
+        """This method sets up the downloads tab"""
         self.downloadsTabWidget.tabCloseRequested.connect(self.close_download_tab)
 
     def start_inbox_server(self):
+        """This method starts the inbox server"""
         conn = dbfunctions.get_connection()
         mac, ipv4, ipv6ll, inbox_port = dbfunctions.get_configuration(conn, 'mac_address', 'ipv4_address',
                                                                       'ipv6_address', 'inbox_port')
@@ -1054,17 +1085,20 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot(str, int)
     def inboxServerThreadOnStart(self, ip, port):
+        """A callback when inbox server started"""
         logging.info(f'Inbox server started at {ip}:{port}')
         self.addNotificationToNotificationsTable(f"Waiting for messages on {ip}:{port}")
 
     @QtCore.pyqtSlot('PyQt_PyObject')
     def inboxServerThreadOnError(self, e):
+        """A callback when inbox server on error"""
         logging.info(f'Inbox server error: {e}')
         self.addNotificationToNotificationsTable(f"Inbox server error: {e}")
         self.addNotificationToNotificationsTable(f"You wont be able to receive messages")
 
     @QtCore.pyqtSlot(dict)
     def inboxServerThreadOnMessageReceived(self, msginfo):
+        """A callback when inbox server on message received"""
         logging.info(
             f'Message received from {msginfo["mac_address"]}, IP={msginfo["ip"]} , stranger={msginfo["is_stranger"]}')
         # If the contact was a stranger, he was added to contacts and the ip information has been updated in the
@@ -1103,11 +1137,13 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot(str)
     def inboxServerThreadOnGetContactInformation(self, remote_ip):
+        """A callback when inbox server when someone requesting """
         logging.info(f"{remote_ip} requested contact information")
         self.addNotificationToNotificationsTable(f"{remote_ip} requested contact information")
 
     @QtCore.pyqtSlot(int)
     def close_download_tab(self, index):
+        """A callback called when tab is closed"""
         logging.info(f'Tab {index} closing')
         tab: FtpClientTabWidget = self.downloadsTabWidget.widget(index)
         try:
@@ -1118,6 +1154,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.downloadsTabWidget.removeTab(index)
 
     def setupChatsTab(self):
+        """This method sets up the downloads tab"""
         font = QtGui.QFont()
         font.setPointSize(10)
         self.chatTextEdit.setFont(font)
@@ -1130,12 +1167,14 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.messageLineEdit.returnPressed.connect(self.sendMessagePushButtonAction)
 
     def setupContactsTab(self):
+        """This method sets up the contacts tab"""
         self.addNewContactPushButton.clicked.connect(self.addNewContactPushButtonAction)
         self.findContactPushButton.clicked.connect(self.findContactInTable)
         self.setupContactsTable()
         self.loadContactsTable()
 
     def setupFtpTab(self):
+        """This method sets up the ftp tab"""
         self.ftpIpAddressLineEdit.setReadOnly(True)
         self.ftpShutdownPushButton.setEnabled(False)
         self.ftpStartPushButton.clicked.connect(self.ftpStartPushButtonAction)
@@ -1147,6 +1186,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         self.setupFtpConnectedUsersTable()
 
     def setupInterlocutorTab(self):
+        """This method sets up the interlocutor tab"""
         self.myContactInfoIpAddressLineEdit.setReadOnly(True)
         self.myContactInfoMacAddressLineEdit.setReadOnly(True)
         self.myContactInfoInboxPortSpinBox.editingFinished.connect(self.userChangedTheInboxPort)
@@ -1157,17 +1197,20 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
 
     @QtCore.pyqtSlot()
     def userChangedTheInboxPort(self):
+        """Callback when user changes the inbox port"""
         self.myContactInfoInboxPortSpinBox.blockSignals(True)
         msg = QtWidgets.QMessageBox(self)
         msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setWindowTitle('Information')
-        msg.setText(f"After changing this value, you must restart the application, otherwise changes won't be applied. If you didn't changed it, you can continue using the app normally.")
+        msg.setText(
+            f"After changing this value, you must restart the application, otherwise changes won't be applied. If you didn't changed it, you can continue using the app normally.")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
         answer = msg.exec_()
         self.myContactInfoInboxPortSpinBox.blockSignals(False)
 
     def setupNotificationsTab(self):
+        """This method sets up the notifications tab"""
         self.setupNotificationsTable()
 
     @QtCore.pyqtSlot()
@@ -1198,11 +1241,11 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         inter_port = self.interPortSpinBox.value()
         inter_password = self.interPasswordLineEdit.text()
 
-        smartSendMessageThread = inbox.SmartSendMessageThread(ipv4, ipv6, inbox_p, remote_mac, user_mac, inter_ip, inter_port, inter_password, message, name, timeout=3)
+        smartSendMessageThread = inbox.SmartSendMessageThread(ipv4, ipv6, inbox_p, remote_mac, user_mac, inter_ip,
+                                                              inter_port, inter_password, message, name, timeout=3)
         smartSendMessageThread.signals.on_success.connect(self.smartSendMessageOnSuccess)
         smartSendMessageThread.signals.on_fail.connect(self.smartSendMessageOnFail)
         self.threadPool.start(smartSendMessageThread)
-
 
     @QtCore.pyqtSlot(str, str)
     def smartSendMessageOnFail(self, remote_name, remote_mac):
@@ -1219,7 +1262,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
     def smartSendMessageOnSuccess(self, received_confirmation, sent_timestamp, message, ipv_used, contact_information):
 
         conn = dbfunctions.get_connection()
-        dbfunctions.insert_sent_message(conn, sent_timestamp, received_confirmation['receiver'], message, received_confirmation['received_timestamp'])
+        dbfunctions.insert_sent_message(conn, sent_timestamp, received_confirmation['receiver'], message,
+                                        received_confirmation['received_timestamp'])
         conn.close()
 
         if contact_information:  # Update the contact (ipv4, ipv6, inbox_port, ftp_port)
@@ -1233,7 +1277,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         self.contactsTableWidget.item(row, 3).setText(contact_information['ipv6_address'])
                     elif ipv_used == '6lleui64':  # Elimina la IPv4 y actualiza la IPv6 a esta direccion
                         self.contactsTableWidget.item(row, 2).setText('')
-                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(received_confirmation['receiver'])
+                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(
+                            received_confirmation['receiver'])
                         self.contactsTableWidget.item(row, 3).setText(ipv6lleui64)
 
                     self.contactsTableWidget.cellWidget(row, 4).setValue(contact_information['inbox_port'])
@@ -1257,14 +1302,16 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                         self.contactsTableWidget.item(row, 2).setText('')
                     elif ipv_used == '6lleui64':  # La IPv4 y la IPv6 no funcionaron, pero la IPv6 ll eui64 si, elimina la 4 y actualiza la 6
                         self.contactsTableWidget.item(row, 2).setText('')
-                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(received_confirmation['receiver'])
+                        ipv6lleui64 = configuration.generate_ipv6_linklocal_eui64_address(
+                            received_confirmation['receiver'])
                         self.contactsTableWidget.item(row, 3).setText(ipv6lleui64)
 
                     break
 
         if self.chatMateMacAddressLabel.text() == received_confirmation['receiver']:
             for row in range(self.conversationsTableWidget.rowCount()):
-                if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == received_confirmation['receiver']:
+                if self.conversationsTableWidget.item(row, 0).text().split('\n')[1] == received_confirmation[
+                    'receiver']:
                     self.conversationsTableWidget.cellClicked.emit(row, 0)
                     break
 
@@ -2053,7 +2100,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
             inter_port = self.interPortSpinBox.value()
             inter_pass = self.interPasswordLineEdit.text()
 
-            ifreqthread = task.RequestContactInformationThread(ip4, ip6, mac, name, port, inter_ip, inter_port, inter_pass, timeout=2)
+            ifreqthread = task.RequestContactInformationThread(ip4, ip6, mac, name, port, inter_ip, inter_port,
+                                                               inter_pass, timeout=2)
             ifreqthread.signals.on_fail.connect(self.informationRequestOnFail)
             ifreqthread.signals.on_success.connect(self.informationRequestOnSuccess)
             self.threadPool.start(ifreqthread)
@@ -2099,7 +2147,6 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 answer = msg.exec_()
                 return
 
-
     @QtCore.pyqtSlot()
     def start_ftp_client_connection_fast(self):
         btn = self.sender()
@@ -2114,7 +2161,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 msg.setIcon(QtWidgets.QMessageBox.Critical)
                 msg.setWindowTitle('Not enought information')
                 msg.setText(f"{name} doesn't have an IPv4 address")
-                msg.setInformativeText(f"Please, update {name} by clicking on 'Update' in the contacts table to try to get the IPv4 address of {name}")
+                msg.setInformativeText(
+                    f"Please, update {name} by clicking on 'Update' in the contacts table to try to get the IPv4 address of {name}")
                 msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
@@ -2133,7 +2181,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 msg.setIcon(QtWidgets.QMessageBox.Critical)
                 msg.setWindowTitle('Not enought information')
                 msg.setText(f"{self.contactsTableWidget.item(row, 0).text()} doesn't have an IPv4 address")
-                msg.setInformativeText(f"Please, click on 'Update' to try to get the IPv4 address of {self.contactsTableWidget.item(row, 0).text()}")
+                msg.setInformativeText(
+                    f"Please, click on 'Update' to try to get the IPv4 address of {self.contactsTableWidget.item(row, 0).text()}")
                 msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
                 msg.setDefaultButton(QtWidgets.QMessageBox.Ok)
                 answer = msg.exec_()
@@ -2596,7 +2645,8 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
                 self.contactsTableWidget.cellWidget(row, 5).setValue(new_contact['ftp_port'])
 
                 conn = dbfunctions.get_connection()
-                dbfunctions.update_contact(conn, new_contact.get('mac_address'), inbox_port=new_contact['inbox_port'], ftp_port=new_contact['ftp_port'])
+                dbfunctions.update_contact(conn, new_contact.get('mac_address'), inbox_port=new_contact['inbox_port'],
+                                           ftp_port=new_contact['ftp_port'])
                 conn.close()
 
                 msg = QtWidgets.QMessageBox(self)
