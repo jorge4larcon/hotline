@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This module defines tasks (threads) of the application."""
 
 from PyQt5 import QtCore
@@ -18,6 +20,7 @@ import configuration
 #             raise EOFError()
 
 class GetContactInformationForChatSignals(QtCore.QObject):
+    """This class defines the signals of a GetContactInformationForChatThread"""
     # remote_name
     on_error = QtCore.pyqtSignal(str, 'PyQt_PyObject')
     # remote_mac, local_mac, remote_name, message, contact_info
@@ -26,6 +29,7 @@ class GetContactInformationForChatSignals(QtCore.QObject):
 
 
 class GetContactInformationForChatThread(QtCore.QRunnable):
+    """This class defines the GetContactInformationForChatThread thread"""
     def __init__(self, remote_ip, remote_port, remote_name, remote_mac, message, local_mac):
         super(GetContactInformationForChatThread, self).__init__()
         self.remote_ip = remote_ip
@@ -37,6 +41,7 @@ class GetContactInformationForChatThread(QtCore.QRunnable):
         self.signals = GetContactInformationForChatSignals()
 
     def run(self) -> None:
+        """This method obtains contact information to start a chat"""
         try:
             result = asyncio.run(inbox.get_contact_information(self.remote_ip, self.remote_ip))
         except Exception as e:
@@ -48,11 +53,13 @@ class GetContactInformationForChatThread(QtCore.QRunnable):
 
 
 class RequestContactInformationSignals(QtCore.QObject):
+    """These are the signals emitted by the RequestContactInformationThread"""
     on_fail = QtCore.pyqtSignal(str, str)
     on_success = QtCore.pyqtSignal(dict)
 
 
 class RequestContactInformationThread(QtCore.QRunnable):
+    """This thread requests contact information to another contact"""
     def __init__(self, ip4, ip6, mac, name, port, inter_server_ip, inter_server_port, inter_server_password,
                  timeout=3):
         super(RequestContactInformationThread, self).__init__()
@@ -70,6 +77,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
         self.signals = RequestContactInformationSignals()
 
     def run(self) -> None:
+        """This is the method that is called when the thread starts"""
         logging.info(f"Requesting information to {self.name} {self.mac}")
         if self.ip4 and self.ip6:
             self.ir_ip4_ip6()
@@ -81,6 +89,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
             self.ir_noip4_noip6()
 
     def ir_ip4_ip6(self):
+        """This function is called to request contact information"""
         logging.info(f"{self.name} has IPv4 and IPv6 address")
         try:
             logging.info(f"Requesting information to {self.name} using {self.ip4}")
@@ -97,6 +106,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
                 self.ir_noip4_ip6()
 
     def ir_noip4_ip6(self):
+        """This function is called to request contact information"""
         logging.info(f"{self.name} has IPv6 address")
         try:
             logging.info(f"Requesting information to {self.name} using {self.ip6}")
@@ -123,6 +133,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
                 self.ir_noip4_noip6()
 
     def ir_ip4_noip6(self):
+        """This function is called to request contact information"""
         logging.info(f"{self.name} has IPv4 address")
         try:
             logging.info(f"Requesting information to {self.name} using {self.ip4}")
@@ -139,6 +150,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
                 self.ir_noip4_noip6()
 
     def ir_noip4_noip6(self):
+        """This function is called to request contact information"""
         try:
             logging.info(f"Requesting contact information using IPv6 Link Local EUI-64 address...")
             ci = asyncio.run(inbox.get_contact_information(self.ip6lleui64, self.port, self.timeout))
@@ -164,6 +176,7 @@ class RequestContactInformationThread(QtCore.QRunnable):
                     self.signals.on_fail.emit(self.name, self.mac)
 
     def ir_interlocutor(self):
+        """This function is called to request contact information"""
         try:
             logging.info(f"Sending a 'GET by MAC' request to the Interlocutor server {self.inter_server_ip}:{self.inter_server_port}")
             req = inter.get_by_mac(self.mac)
@@ -209,12 +222,14 @@ class RequestContactInformationThread(QtCore.QRunnable):
 
 
 class GetContactInformationSignals(QtCore.QObject):
+    """These are the signals emitted by the GetContactInformationThread"""
     on_error = QtCore.pyqtSignal(str, int)
     on_result = QtCore.pyqtSignal(dict)
     on_finished = QtCore.pyqtSignal()
 
 
 class GetContactInformationThread(QtCore.QRunnable):
+    """This thread gets contact information from another contact"""
     def __init__(self, ip, port=42000, timeout=3):
         super(GetContactInformationThread, self).__init__()
         self.ip = ip
@@ -224,6 +239,7 @@ class GetContactInformationThread(QtCore.QRunnable):
 
     @QtCore.pyqtSlot()
     def run(self):
+        """This is the method that is called when the thread starts"""
         try:
             result = asyncio.run(inbox.get_contact_information(self.ip, self.port, self.timeout))
         except Exception as e:
@@ -235,6 +251,7 @@ class GetContactInformationThread(QtCore.QRunnable):
 
 
 class StartFtpClientConnectionSignals(QtCore.QObject):
+    """These are the signals emitted by a StartFtpClientConnectionThread"""
     on_error = QtCore.pyqtSignal(str, int)
     on_result = QtCore.pyqtSignal('PyQt_PyObject')
     on_connect = QtCore.pyqtSignal(str)
@@ -242,6 +259,7 @@ class StartFtpClientConnectionSignals(QtCore.QObject):
 
 
 class StartFtpClientConnectionThread(QtCore.QRunnable):
+    """This thread starts an FTP connection with another contact"""
     def __init__(self, ip, port=42000, timeout=3):
         super(StartFtpClientConnectionThread, self).__init__()
         self.ip = ip
@@ -250,6 +268,7 @@ class StartFtpClientConnectionThread(QtCore.QRunnable):
         self.signals = StartFtpClientConnectionSignals()
 
     def run(self):
+        """This is the method that is called when the thread starts"""
         try:
             ftp = ftplib.FTP()
             banner = ftp.connect(host=self.ip, port=self.port, timeout=self.timeout)
@@ -264,6 +283,7 @@ class StartFtpClientConnectionThread(QtCore.QRunnable):
 
 
 class UploadFileSignals(QtCore.QObject):
+    """These are the signals emitted by a UploadFileThread"""
     # host, port, filename  <<< When you should freeze actions
     on_start = QtCore.pyqtSignal(str, int, str)
     # host, port, filename, exception
@@ -275,6 +295,7 @@ class UploadFileSignals(QtCore.QObject):
 
 
 class UploadFileThread(QtCore.QRunnable):
+    """This thread uploads a file to a FTP server"""
     def __init__(self, filename, ftp_conn: ftplib.FTP):
         super(UploadFileThread, self).__init__()
         self.filename = filename
@@ -282,6 +303,7 @@ class UploadFileThread(QtCore.QRunnable):
         self.signals = UploadFileSignals()
 
     def run(self):
+        """This method is called when the thread starts"""
         try:
             with open(self.filename, 'rb') as f:
                 self.signals.on_start.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
@@ -295,6 +317,7 @@ class UploadFileThread(QtCore.QRunnable):
 
 
 class DownloadFileSignals(QtCore.QObject):
+    """These are the signals emitted by a DownloadFileSignals"""
     # host, port, filename
     on_start = QtCore.pyqtSignal(str, int, str)
     # host, port, filename, exception
@@ -305,6 +328,7 @@ class DownloadFileSignals(QtCore.QObject):
 
 
 class DownloadFileThread(QtCore.QRunnable):
+    """This thread downloads a file from a FTP server"""
     def __init__(self, filename, ftp_conn: ftplib.FTP, folder_to_save):
         super(DownloadFileThread, self).__init__()
         self.filename = filename
@@ -313,6 +337,7 @@ class DownloadFileThread(QtCore.QRunnable):
         self.signals = DownloadFileSignals()
 
     def run(self) -> None:
+        """This method is called when the thread starts"""
         try:
             self.signals.on_start.emit(self.ftp_conn.host, self.ftp_conn.port, self.filename)
             # self.filename = f"{self.ftp_conn.pwd()}/{self.filename}"
@@ -328,12 +353,14 @@ class DownloadFileThread(QtCore.QRunnable):
 
 
 class SignUpRequestSiganls(QtCore.QObject):
+    """These are the signals emitted by a SignUpRequestThread"""
     on_start = QtCore.pyqtSignal()
     on_error = QtCore.pyqtSignal('PyQt_PyObject')
     on_result = QtCore.pyqtSignal(dict)
 
 
 class SignUpRequestThread(QtCore.QRunnable):
+    """This thread makes a SignUp request to an Interlocutor server"""
     def __init__(self, server_addr, server_port, server_password, c_mac, c_name, c_port, c_getonlybymac):
         super(SignUpRequestThread, self).__init__()
         self.server_address = server_addr
@@ -347,6 +374,7 @@ class SignUpRequestThread(QtCore.QRunnable):
         self.c_getonlybymac = c_getonlybymac
 
     def run(self) -> None:
+        """This method is called when the thread starts"""
         request = inter.sign_up(self.c_mac, self.c_name, self.c_port, self.c_getonlybymac)
         try:
             self.signals.on_start.emit()
@@ -358,6 +386,7 @@ class SignUpRequestThread(QtCore.QRunnable):
 
 
 class GetRequestSignals(QtCore.QObject):
+    """These are the signals emitted by a GetRequestThread"""
     on_start = QtCore.pyqtSignal()
     on_result = QtCore.pyqtSignal(dict)
     on_error = QtCore.pyqtSignal('PyQt_PyObject')
@@ -365,6 +394,7 @@ class GetRequestSignals(QtCore.QObject):
 
 
 class GetRequestThread(QtCore.QRunnable):
+    """This thread makes a Get request to an Interlocutor server"""
     def __init__(self, server_addr, server_port, server_password, mac=None, username=None):
         super(GetRequestThread, self).__init__()
         self.server_address = server_addr
@@ -377,6 +407,7 @@ class GetRequestThread(QtCore.QRunnable):
             self.request = inter.get_by_username(username)
 
     def run(self) -> None:
+        """This method is called when the thread starts"""
         try:
             self.signals.on_start.emit()
             result = asyncio.run(
@@ -390,6 +421,7 @@ class GetRequestThread(QtCore.QRunnable):
 
 
 class DropRequestSignals(QtCore.QObject):
+    """These are the signals emitted by a DropRequestThread"""
     on_start = QtCore.pyqtSignal(str)
     on_error = QtCore.pyqtSignal('PyQt_PyObject', str)
     on_result = QtCore.pyqtSignal(dict)
@@ -397,6 +429,7 @@ class DropRequestSignals(QtCore.QObject):
 
 
 class DropRequestThread(QtCore.QRunnable):
+    """This thread makes a Drop request to an Interlocutor server"""
     def __init__(self, server_address, server_port, server_password, ip_to_drop):
         super(DropRequestThread, self).__init__()
         self.signals = DropRequestSignals()
@@ -406,6 +439,7 @@ class DropRequestThread(QtCore.QRunnable):
         self.ip_to_drop = ip_to_drop
 
     def run(self) -> None:
+        """This method is called when the thread starts"""
         try:
             request = inter.drop(self.ip_to_drop)
             self.signals.on_start.emit(self.ip_to_drop)

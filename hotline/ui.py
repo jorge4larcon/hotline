@@ -1291,7 +1291,7 @@ class HotlineMainWindow(QtWidgets.QMainWindow, Ui_HotlineMainWindow):
         text = ''
         for message in reversed(messages):
             if message['type'] == 'received':
-                text = f"[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}]{message['name']}: {message['content']}"
+                text = f"[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
                 # text = f"S[{message['sent_timestamp'].strftime('%b %d %Y %I:%M %p')}]  R[{message['timestamp'].strftime('%b %d %Y %I:%M %p')}] {message['name']}: {message['content']}"
                 # text += f"""<b>R[ {message['timestamp'].strftime('%b %d %Y %I:%M %p')} ] {message['name']}: </b> <p>{message['content']}</p><br>"""
 

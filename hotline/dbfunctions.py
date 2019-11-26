@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This module provides an API for database related operations."""
 
 import sqlite3

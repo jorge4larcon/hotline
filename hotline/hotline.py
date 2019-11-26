@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This module is the responsible of setting up the application and then start it."""
 
 import dbfunctions

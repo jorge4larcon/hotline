@@ -1,3 +1,6 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
+
 """This module contains functions that are used to configure the initial parameters of the application, such as the
 database path or the current network configuration."""
 

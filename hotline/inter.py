@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This functions defines the requests that can be done to an interloutor server"""
 
 import asyncio

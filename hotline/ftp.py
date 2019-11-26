@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This module contains functions to start an FTP server and handle its events."""
 
 from pyftpdlib.handlers import FTPHandler

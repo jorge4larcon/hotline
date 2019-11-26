@@ -1,3 +1,5 @@
+# Author: Jorge Alarcon Alvarez
+# Email: jorge4larcon@gmail.com
 """This module defines functions and classes to send and receive messages across a LAN"""
 
 import asyncio
